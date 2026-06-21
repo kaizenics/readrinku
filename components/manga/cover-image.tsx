@@ -1,6 +1,7 @@
 import Image from "next/image"
 
 import { AspectRatio } from "@/components/ui/aspect-ratio"
+import { isPlaceholderAsset } from "@/lib/readrinku"
 import { cn } from "@/lib/utils"
 
 export function CoverImage({
@@ -9,11 +10,20 @@ export function CoverImage({
   priority = false,
   className,
 }: {
-  src: string
+  src: string | null
   alt: string
   priority?: boolean
   className?: string
 }) {
+  if (!src || isPlaceholderAsset(src)) {
+    return (
+      <AspectRatio
+        ratio={2 / 3}
+        className={cn("overflow-hidden rounded-lg border bg-muted/40", className)}
+      />
+    )
+  }
+
   return (
     <AspectRatio ratio={2 / 3} className={cn("overflow-hidden rounded-lg border bg-muted", className)}>
       <Image

@@ -1,32 +1,36 @@
-import { ContinueReading } from "@/components/manga/continue-reading"
 import { FeaturedManga } from "@/components/manga/featured-manga"
-import { MangaShelf } from "@/components/manga/manga-shelf"
-import { mangaRepository } from "@/lib/data/manga-repository"
+import { LiveMangaShelf } from "@/components/manga/live-manga-shelf"
+import {
+  getCompletedMangadexManga,
+  getFeaturedMangadexManga,
+  getPopularMangadexManga,
+  getRecentMangadexManga,
+} from "@/lib/data/mangadex"
 
 export default async function HomePage() {
-  const manga = await mangaRepository.getAll()
-  const featured = manga.slice(0, 8)
-  const recentlyUpdated = manga.slice(0, 4)
-  const popular = manga.filter((entry) => entry.status === "ongoing").slice(0, 4)
-  const completed = manga.filter((entry) => entry.status === "completed")
+  const [featured, recentlyUpdated, popular, completed] = await Promise.all([
+    getFeaturedMangadexManga(8),
+    getRecentMangadexManga(6),
+    getPopularMangadexManga(6),
+    getCompletedMangadexManga(6),
+  ])
 
   return (
     <div className="page-frame flex flex-col gap-10 py-8 sm:py-10">
       <FeaturedManga manga={featured} />
-      <ContinueReading manga={manga} />
-      <MangaShelf
+      <LiveMangaShelf
         title="Recently updated"
-        description="Fresh placeholder updates with tidy metadata and consistent cover proportions."
+        description="Live releases from the official MangaDex API."
         manga={recentlyUpdated}
       />
-      <MangaShelf
+      <LiveMangaShelf
         title="Popular right now"
-        description="Discovery-first titles chosen to show the catalog structure and mobile spacing."
+        description="Popular titles ranked from MangaDex discovery data."
         manga={popular}
       />
-      <MangaShelf
-        title="Completed shelves"
-        description="Finished stories for readers who prefer clean arcs and fast binge sessions."
+      <LiveMangaShelf
+        title="Completed manga"
+        description="Finished titles you can jump into right away."
         manga={completed}
       />
     </div>

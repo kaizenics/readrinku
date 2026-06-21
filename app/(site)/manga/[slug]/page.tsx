@@ -1,19 +1,22 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { BookOpenIcon, TextAlignRightIcon } from "@phosphor-icons/react/ssr"
+import {
+  BookOpenIcon,
+  TextAlignRightIcon,
+} from "@phosphor-icons/react/ssr"
 
-import { ChapterList } from "@/components/manga/chapter-list"
 import { CoverImage } from "@/components/manga/cover-image"
+import { MangadexChapterList } from "@/components/manga/mangadex-chapter-list"
 import { LibrarySelect } from "@/components/manga/library-select"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { getMangaInfoBySlug } from "@/lib/data/manga-info"
 import {
   contentRatingLabels,
   formatDateLabel,
   mangaStatusLabels,
 } from "@/lib/readrinku"
-import { mangaRepository } from "@/lib/data/manga-repository"
 
 export default async function MangaDetailsPage({
   params,
@@ -21,32 +24,38 @@ export default async function MangaDetailsPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  const manga = await mangaRepository.getBySlug(slug)
+  const result = await getMangaInfoBySlug(slug)
 
-  if (!manga) {
+  if (!result) {
     notFound()
   }
 
-  const firstReadableChapter = manga.chapters.find((chapter) => chapter.readable)
+  const { manga, mangadexInfo, display } = result
+  const latestReadableChapter = manga.chapters.find((chapter) => chapter.readable)
 
   return (
     <div className="page-frame flex flex-col gap-8 py-8 sm:py-10">
-      <Card className="overflow-hidden border bg-card/90">
+      <Card className="overflow-hidden border bg-card">
         <CardContent className="grid gap-6 p-4 sm:p-6 lg:grid-cols-[240px_1fr]">
-          <CoverImage src={manga.coverImage} alt={manga.title} priority />
+          <CoverImage src={display.coverImage} alt={display.title} priority />
           <div className="flex flex-col gap-5">
             <div className="flex flex-wrap gap-2">
               <Badge>{mangaStatusLabels[manga.status]}</Badge>
               <Badge variant="secondary">{contentRatingLabels[manga.contentRating]}</Badge>
               <Badge variant="outline">{manga.readingDirection.toUpperCase()}</Badge>
+              <Badge variant="outline">MangaDex</Badge>
             </div>
 
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1">
                 <h1 className="font-heading text-3xl font-semibold tracking-tight">
-                  {manga.title}
+                  {display.title}
                 </h1>
-                <p className="text-muted-foreground">{manga.tagline}</p>
+                {display.altTitles.length > 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Also known as: {display.altTitles.slice(0, 4).join(", ")}
+                  </p>
+                ) : null}
               </div>
               <p className="max-w-3xl text-sm leading-7 text-muted-foreground">
                 {manga.synopsis}
@@ -71,16 +80,16 @@ export default async function MangaDetailsPage({
               </div>
               <div className="rounded-lg border bg-background/70 p-3">
                 <dt className="text-muted-foreground">Genres</dt>
-                <dd className="mt-1 font-medium">{manga.genres.join(", ")}</dd>
+                <dd className="mt-1 font-medium">{display.genres.join(", ")}</dd>
               </div>
             </dl>
 
             <div className="flex flex-col gap-3 sm:flex-row">
-              {firstReadableChapter ? (
+              {latestReadableChapter ? (
                 <Button asChild className="min-h-11 px-4">
-                  <Link href={`/read/${manga.slug}/${firstReadableChapter.slug}`}>
+                  <Link href={`/read/${manga.slug}/${latestReadableChapter.slug}`}>
                     <BookOpenIcon data-icon="inline-start" />
-                    Read chapter {firstReadableChapter.number}
+                    Open latest chapter
                   </Link>
                 </Button>
               ) : null}
@@ -96,10 +105,10 @@ export default async function MangaDetailsPage({
             Chapter list
           </h2>
           <p className="text-sm text-muted-foreground">
-            One chapter is fully readable for the frontend prototype. The rest demonstrate list behavior.
+            Live chapter entries are loaded from MangaDex and linked directly to the reader.
           </p>
         </div>
-        <ChapterList manga={manga} />
+        <MangadexChapterList chapters={mangadexInfo.chapters} />
       </section>
     </div>
   )

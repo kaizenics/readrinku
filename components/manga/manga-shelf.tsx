@@ -8,7 +8,7 @@ export function MangaShelf({
   progress = [],
 }: {
   title: string
-  description: string
+  description?: string
   manga: Manga[]
   progress?: ReadingProgress[]
 }) {
@@ -16,7 +16,7 @@ export function MangaShelf({
     <section className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
         <h2 className="font-heading text-2xl font-semibold tracking-tight">{title}</h2>
-        <p className="text-sm text-muted-foreground">{description}</p>
+        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
         {manga.map((entry) => (

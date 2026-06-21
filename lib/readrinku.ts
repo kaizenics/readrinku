@@ -71,6 +71,10 @@ export function formatRelativeLabel(value: string) {
   return formatDistanceToNow(new Date(value), { addSuffix: true })
 }
 
+export function isPlaceholderAsset(value: string) {
+  return value.startsWith("/placeholders/")
+}
+
 export function getLatestChapter(manga: Manga) {
   return getRecentChapters(manga, 1)[0]
 }

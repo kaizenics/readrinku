@@ -31,7 +31,7 @@ export function BrowseFilters({
   genres,
   initial,
 }: {
-  genres: string[]
+  genres: Array<{ id: string; name: string }>
   initial: {
     q: string
     genre: string
@@ -120,8 +120,8 @@ export function BrowseFilters({
               <SelectGroup>
                 <SelectItem value="all">All genres</SelectItem>
                 {genres.map((genre) => (
-                  <SelectItem key={genre} value={genre}>
-                    {genre}
+                  <SelectItem key={genre.id} value={genre.id}>
+                    {genre.name}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -176,9 +176,9 @@ export function BrowseFilters({
             <SelectContent>
               <SelectGroup>
                 <SelectItem value="updated">Recently updated</SelectItem>
+                <SelectItem value="popular">Popular</SelectItem>
                 <SelectItem value="title">Title</SelectItem>
-                <SelectItem value="chapters">Chapter count</SelectItem>
-                <SelectItem value="continue">Continue reading</SelectItem>
+                <SelectItem value="newest">Newest added</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>

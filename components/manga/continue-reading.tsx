@@ -1,14 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowClockwiseIcon, BookOpenIcon } from "@phosphor-icons/react"
+import { ArrowClockwiseIcon } from "@phosphor-icons/react"
 
 import { CoverImage } from "@/components/manga/cover-image"
 import { useReadRinku } from "@/components/providers/read-rinku-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
-import { getMangaProgress, getProgressPercent } from "@/lib/readrinku"
+import { getMangaProgress, getProgressPercent, isPlaceholderAsset } from "@/lib/readrinku"
 import type { Manga } from "@/lib/types/readrinku"
 
 export function ContinueReading({ manga }: { manga: Manga[] }) {
@@ -26,19 +25,7 @@ export function ContinueReading({ manga }: { manga: Manga[] }) {
     .slice(0, 3)
 
   if (hydrated && entries.length === 0) {
-    return (
-      <Empty className="quiet-panel min-h-56 rounded-xl border-dashed">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <BookOpenIcon />
-          </EmptyMedia>
-          <EmptyTitle>No reading history yet</EmptyTitle>
-          <EmptyDescription>
-            Open a placeholder chapter and your progress will appear here.
-          </EmptyDescription>
-        </EmptyHeader>
-      </Empty>
-    )
+    return null
   }
 
   return (
@@ -52,8 +39,16 @@ export function ContinueReading({ manga }: { manga: Manga[] }) {
       <div className="grid gap-4 lg:grid-cols-3">
         {entries.map(({ manga, progress: currentProgress }) => (
           <Card key={manga.id} className="border bg-card/90">
-            <CardContent className="grid gap-4 p-4 sm:grid-cols-[112px_1fr]">
-              <CoverImage src={manga.coverImage} alt={manga.title} />
+            <CardContent
+              className={
+                isPlaceholderAsset(manga.coverImage)
+                  ? "grid gap-4 p-4"
+                  : "grid gap-4 p-4 sm:grid-cols-[112px_1fr]"
+              }
+            >
+              {!isPlaceholderAsset(manga.coverImage) ? (
+                <CoverImage src={manga.coverImage} alt={manga.title} />
+              ) : null}
               <div className="flex flex-col justify-between gap-4">
                 <div className="flex flex-col gap-2">
                   <h3 className="font-heading text-lg font-semibold tracking-tight">

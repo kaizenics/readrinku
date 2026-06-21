@@ -12,11 +12,20 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel"
 import { Button } from "@/components/ui/button"
-import { getLatestChapter } from "@/lib/readrinku"
-import type { Manga } from "@/lib/types/readrinku"
+import type { MangadexMangaPreview } from "@/lib/types/readrinku"
 import { cn } from "@/lib/utils"
 
-export function FeaturedManga({ manga }: { manga: Manga[] }) {
+export function FeaturedManga({ manga }: { manga: MangadexMangaPreview[] }) {
+  const items = manga.filter((entry) => entry.image)
+
+  if (items.length === 0) {
+    return null
+  }
+
+  return <FeaturedMangaCarousel manga={items} />
+}
+
+function FeaturedMangaCarousel({ manga }: { manga: MangadexMangaPreview[] }) {
   const [api, setApi] = useState<CarouselApi>()
   const [selectedIndex, setSelectedIndex] = useState(0)
 
@@ -60,9 +69,6 @@ export function FeaturedManga({ manga }: { manga: Manga[] }) {
             <FireIcon />
             Popular manga
           </span>
-          <p className="hidden text-sm text-muted-foreground md:block">
-            Rotating through the first 8 catalog covers.
-          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -104,20 +110,18 @@ export function FeaturedManga({ manga }: { manga: Manga[] }) {
       <Carousel setApi={setApi} opts={{ align: "start", loop: false }}>
         <CarouselContent className="-ml-2">
           {manga.map((entry) => {
-            const latestChapter = getLatestChapter(entry)
-
             return (
               <CarouselItem
                 key={entry.id}
                 className="basis-1/2 pl-2 sm:basis-1/3 lg:basis-1/5 xl:basis-1/6"
               >
                 <Link
-                  href={`/manga/${entry.slug}`}
+                  href={`/manga/${entry.id}`}
                   className="group block overflow-hidden rounded-sm border bg-card"
                 >
                   <div className="relative aspect-[7/9] w-full overflow-hidden">
                     <Image
-                      src={entry.coverImage}
+                      src={entry.image ?? ""}
                       alt={entry.title}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
@@ -128,7 +132,7 @@ export function FeaturedManga({ manga }: { manga: Manga[] }) {
                         {entry.title}
                       </p>
                       <p className="mt-1 text-xs text-white/80">
-                        Chapter {latestChapter.number}
+                        {entry.lastChapterLabel}
                       </p>
                     </div>
                   </div>

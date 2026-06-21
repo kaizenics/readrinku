@@ -36,6 +36,7 @@ export interface Manga {
   id: string
   slug: string
   title: string
+  mangadexId?: string
   tagline: string
   synopsis: string
   coverImage: string
@@ -48,6 +49,56 @@ export interface Manga {
   chapterCount: number
   accent: string
   chapters: Chapter[]
+}
+
+export interface MangadexChapterInfo {
+  id: string
+  mangaId: string
+  title: string
+  chapter: string | null
+  releaseDate: string | null
+  pageCount: number
+  readable: boolean
+  translatedLanguage: string
+}
+
+export interface MangadexMangaInfo {
+  id: string
+  title: string
+  altTitles: string[] | null
+  genres: string[] | null
+  image: string | null
+  synopsis: string
+  authors: string[]
+  artists: string[]
+  status: MangaStatus
+  contentRating: ContentRating
+  readingDirection: ReadingDirection
+  updatedAt: string
+  chapterCount: number
+  chapters: MangadexChapterInfo[]
+}
+
+export interface MangadexTag {
+  id: string
+  name: string
+}
+
+export interface MangadexMangaPreview {
+  id: string
+  title: string
+  altTitles: string[]
+  synopsis: string
+  image: string | null
+  authors: string[]
+  artists: string[]
+  genres: string[]
+  status: MangaStatus
+  contentRating: ContentRating
+  readingDirection: ReadingDirection
+  updatedAt: string
+  chapterCount: number
+  lastChapterLabel: string
 }
 
 export interface ReadingProgress {

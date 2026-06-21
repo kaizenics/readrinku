@@ -83,13 +83,17 @@ export function MangaReader({
   const currentImage = pages[currentPage - 1]
   const canGoBack = currentPage > 1
   const canGoForward = currentPage < totalPages
-
-  const nextChapter = manga.chapters.find(
-    (entry) => entry.number === chapter.number + 1 && entry.readable
+  const readableChapters = useMemo(
+    () => manga.chapters.filter((entry) => entry.readable),
+    [manga.chapters]
   )
-  const previousChapter = manga.chapters.find(
-    (entry) => entry.number === chapter.number - 1 && entry.readable
+  const currentChapterIndex = readableChapters.findIndex(
+    (entry) => entry.slug === chapter.slug
   )
+  const previousChapter =
+    currentChapterIndex >= 0 ? readableChapters[currentChapterIndex + 1] : undefined
+  const nextChapter =
+    currentChapterIndex > 0 ? readableChapters[currentChapterIndex - 1] : undefined
 
   const revealControls = useCallback(() => {
     setShowControls(true)

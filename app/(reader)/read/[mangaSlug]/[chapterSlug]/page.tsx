@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 
 import { MangaReader } from "@/components/reader/manga-reader"
-import { mangaRepository } from "@/lib/data/manga-repository"
+import { getReaderMangaByIds } from "@/lib/data/manga-info"
 
 export default async function ReaderPage({
   params,
@@ -9,12 +9,11 @@ export default async function ReaderPage({
   params: Promise<{ mangaSlug: string; chapterSlug: string }>
 }) {
   const { mangaSlug, chapterSlug } = await params
-  const manga = await mangaRepository.getBySlug(mangaSlug)
-  const chapter = await mangaRepository.getChapter(mangaSlug, chapterSlug)
+  const result = await getReaderMangaByIds(mangaSlug, chapterSlug)
 
-  if (!manga || !chapter || !chapter.readable) {
+  if (!result) {
     notFound()
   }
 
-  return <MangaReader manga={manga} chapter={chapter} />
+  return <MangaReader manga={result.manga} chapter={result.chapter} />
 }

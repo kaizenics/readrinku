@@ -8,6 +8,7 @@ import {
   formatRelativeLabel,
   getProgressPercent,
   getRecentChapters,
+  isPlaceholderAsset,
   mangaStatusLabels,
 } from "@/lib/readrinku"
 import type { Manga, ReadingProgress } from "@/lib/types/readrinku"
@@ -22,24 +23,27 @@ export function MangaCard({
 }) {
   const progressPercent = getProgressPercent(progress)
   const recentChapters = getRecentChapters(manga)
+  const showCover = !isPlaceholderAsset(manga.coverImage)
 
   return (
     <Card className="group relative h-full overflow-hidden border bg-card">
       <CardContent className="flex h-full gap-3 p-3 sm:gap-4 sm:p-4">
-        <Link
-          href={`/manga/${manga.slug}`}
-          className="relative block w-38 shrink-0 self-stretch overflow-hidden rounded-md border bg-muted sm:w-52"
-        >
-          <div className="relative h-full min-h-56 w-full sm:min-h-60">
-            <Image
-              src={manga.coverImage}
-              alt={manga.title}
-              fill
-              className="object-cover transition-transform duration-200 group-hover:scale-[1.02]"
-              sizes="(max-width: 640px) 128px, 144px"
-            />
-          </div>
-        </Link>
+        {showCover ? (
+          <Link
+            href={`/manga/${manga.slug}`}
+            className="relative block w-38 shrink-0 self-stretch overflow-hidden rounded-md border bg-muted sm:w-52"
+          >
+            <div className="relative h-full min-h-56 w-full sm:min-h-60">
+              <Image
+                src={manga.coverImage}
+                alt={manga.title}
+                fill
+                className="object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                sizes="(max-width: 640px) 128px, 144px"
+              />
+            </div>
+          </Link>
+        ) : null}
 
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex min-w-0 flex-col gap-2">
@@ -51,14 +55,14 @@ export function MangaCard({
               </span>
             </div>
 
-          <Link
-            href={`/manga/${manga.slug}`}
-            className="block"
-          >
-            <CardTitle className="line-clamp-2 font-heading text-lg leading-snug tracking-tight">
-              {manga.title}
-            </CardTitle>
-          </Link>
+            <Link
+              href={`/manga/${manga.slug}`}
+              className="block"
+            >
+              <CardTitle className="line-clamp-2 font-heading text-lg leading-snug tracking-tight">
+                {manga.title}
+              </CardTitle>
+            </Link>
 
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Badge variant="secondary">{mangaStatusLabels[manga.status]}</Badge>
