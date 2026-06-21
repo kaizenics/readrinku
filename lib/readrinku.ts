@@ -72,7 +72,21 @@ export function formatRelativeLabel(value: string) {
 }
 
 export function getLatestChapter(manga: Manga) {
-  return manga.chapters[0]
+  return getRecentChapters(manga, 1)[0]
+}
+
+export function getRecentChapters(manga: Manga, limit = 3) {
+  return [...manga.chapters]
+    .sort((left, right) => {
+      const dateCompare = right.releaseDate.localeCompare(left.releaseDate)
+
+      if (dateCompare !== 0) {
+        return dateCompare
+      }
+
+      return right.number - left.number
+    })
+    .slice(0, limit)
 }
 
 export function getMangaProgress(

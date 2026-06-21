@@ -5,7 +5,7 @@ import { mangaRepository } from "@/lib/data/manga-repository"
 
 export default async function HomePage() {
   const manga = await mangaRepository.getAll()
-  const featured = manga[0]
+  const featured = manga.slice(0, 8)
   const recentlyUpdated = manga.slice(0, 4)
   const popular = manga.filter((entry) => entry.status === "ongoing").slice(0, 4)
   const completed = manga.filter((entry) => entry.status === "completed")
