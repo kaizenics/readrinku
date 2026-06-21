@@ -537,13 +537,7 @@ export async function getMangadexMangaInfo(
     return null
   }
 
-  let chapters = await getMangadexChapters(id, {
-    translatedLanguage: ["en"],
-  })
-
-  if (chapters.length === 0) {
-    chapters = await getMangadexChapters(id)
-  }
+  const chapters = await getMangadexChapters(id)
 
   return toMangadexInfo(manga, chapters)
 }
