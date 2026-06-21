@@ -263,7 +263,7 @@ export function MangaReader({
             : "opacity-0"
         )}
       >
-        <div className="page-frame flex min-h-16 items-center justify-between gap-4 py-3">
+        <div className="page-frame pointer-events-auto flex min-h-16 items-center justify-between gap-4 py-3">
           <div className="flex min-w-0 items-center gap-3">
             <Button asChild variant="outline" size="sm" className="h-10 px-3">
               <Link href={`/manga/${manga.slug}`}>
@@ -424,35 +424,41 @@ export function MangaReader({
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="min-h-11 px-4"
-                onClick={direction === "rtl" ? goToNext : goToPrevious}
-                disabled={direction === "rtl" ? !canGoForward : !canGoBack}
-              >
-                {direction === "rtl" ? (
-                  <CaretRightIcon data-icon="inline-start" />
-                ) : (
-                  <CaretLeftIcon data-icon="inline-start" />
-                )}
-                Prev zone
-              </Button>
-              <Button
-                type="button"
-                className="min-h-11 px-4"
-                onClick={direction === "rtl" ? goToPrevious : goToNext}
-                disabled={direction === "rtl" ? !canGoBack : !canGoForward}
-              >
-                {direction === "rtl" ? (
-                  <CaretLeftIcon data-icon="inline-start" />
-                ) : (
-                  <CaretRightIcon data-icon="inline-start" />
-                )}
-                Next zone
-              </Button>
-            </div>
+            {preferences.mode === "paged" ? (
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="min-h-11 px-4"
+                  onClick={direction === "rtl" ? goToNext : goToPrevious}
+                  disabled={direction === "rtl" ? !canGoForward : !canGoBack}
+                >
+                  {direction === "rtl" ? (
+                    <CaretRightIcon data-icon="inline-start" />
+                  ) : (
+                    <CaretLeftIcon data-icon="inline-start" />
+                  )}
+                  Prev zone
+                </Button>
+                <Button
+                  type="button"
+                  className="min-h-11 px-4"
+                  onClick={direction === "rtl" ? goToPrevious : goToNext}
+                  disabled={direction === "rtl" ? !canGoBack : !canGoForward}
+                >
+                  {direction === "rtl" ? (
+                    <CaretLeftIcon data-icon="inline-start" />
+                  ) : (
+                    <CaretRightIcon data-icon="inline-start" />
+                  )}
+                  Next zone
+                </Button>
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                Vertical mode follows your scroll position automatically.
+              </div>
+            )}
 
             <div className="flex flex-wrap items-center gap-2">
               {previousChapter ? (

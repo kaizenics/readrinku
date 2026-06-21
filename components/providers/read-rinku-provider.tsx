@@ -3,8 +3,10 @@
 import {
   createContext,
   startTransition,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react"
 
@@ -70,7 +72,7 @@ export function ReadRinkuProvider({ children }: { children: React.ReactNode }) {
     })
   }, [])
 
-  async function login(input: { email: string; password: string }) {
+  const login = useCallback(async (input: { email: string; password: string }) => {
     await new Promise((resolve) => window.setTimeout(resolve, 500))
 
     const existingProfile = profiles.find(
@@ -101,13 +103,13 @@ export function ReadRinkuProvider({ children }: { children: React.ReactNode }) {
     const nextSession = buildSession(profile)
     setSession(nextSession)
     readerStorage.setSession(nextSession)
-  }
+  }, [profiles])
 
-  async function register(input: {
+  const register = useCallback(async (input: {
     displayName: string
     email: string
     password: string
-  }) {
+  }) => {
     await new Promise((resolve) => window.setTimeout(resolve, 600))
 
     if (!input.password) {
@@ -136,96 +138,137 @@ export function ReadRinkuProvider({ children }: { children: React.ReactNode }) {
     setSession(nextSession)
     readerStorage.setProfiles(nextProfiles)
     readerStorage.setSession(nextSession)
-  }
+  }, [profiles])
 
-  async function logout() {
+  const logout = useCallback(async () => {
     setSession(null)
     readerStorage.setSession(null)
-  }
+  }, [])
 
-  function setLibraryStatus(mangaId: string, status?: LibraryStatus) {
+  const setLibraryStatus = useCallback((mangaId: string, status?: LibraryStatus) => {
     const now = new Date().toISOString()
-    const nextProgress = getMangaProgress(progress, mangaId)
+    const latestProgress = getMangaProgress(readerStorage.getProgress(), mangaId)
 
-    const nextEntries = status
-      ? [
-          ...library.filter((entry) => entry.mangaId !== mangaId),
-          {
-            mangaId,
-            status,
-            addedAt:
-              library.find((entry) => entry.mangaId === mangaId)?.addedAt ?? now,
-            updatedAt: now,
-            latestProgress: nextProgress,
-          },
-        ]
-      : library.filter((entry) => entry.mangaId !== mangaId)
+    setLibrary((currentLibrary) => {
+      const nextEntries = status
+        ? [
+            ...currentLibrary.filter((entry) => entry.mangaId !== mangaId),
+            {
+              mangaId,
+              status,
+              addedAt:
+                currentLibrary.find((entry) => entry.mangaId === mangaId)?.addedAt ?? now,
+              updatedAt: now,
+              latestProgress,
+            },
+          ]
+        : currentLibrary.filter((entry) => entry.mangaId !== mangaId)
 
-    setLibrary(nextEntries)
-    readerStorage.setLibrary(nextEntries)
-  }
+      readerStorage.setLibrary(nextEntries)
+      return nextEntries
+    })
+  }, [])
 
-  function updateProgress(entry: ReadingProgress) {
-    const nextProgress = [
-      entry,
-      ...progress.filter(
+  const updateProgress = useCallback((entry: ReadingProgress) => {
+    setProgress((currentProgress) => {
+      const existingEntry = currentProgress.find(
         (current) =>
-          !(
-            current.mangaId === entry.mangaId &&
-            current.chapterSlug === entry.chapterSlug
-          )
-      ),
-    ].slice(0, 50)
+          current.mangaId === entry.mangaId &&
+          current.chapterSlug === entry.chapterSlug
+      )
 
-    const nextLibrary = library.map((libraryEntry) =>
-      libraryEntry.mangaId === entry.mangaId
-        ? {
-            ...libraryEntry,
-            updatedAt: entry.updatedAt,
-            latestProgress: entry,
-          }
-        : libraryEntry
-    )
+      if (
+        existingEntry &&
+        existingEntry.page === entry.page &&
+        existingEntry.totalPages === entry.totalPages &&
+        existingEntry.scrollPercent === entry.scrollPercent
+      ) {
+        return currentProgress
+      }
 
-    setProgress(nextProgress)
-    setLibrary(nextLibrary)
-    readerStorage.setProgress(nextProgress)
-    readerStorage.setLibrary(nextLibrary)
-  }
+      const nextProgress = [
+        entry,
+        ...currentProgress.filter(
+          (current) =>
+            !(
+              current.mangaId === entry.mangaId &&
+              current.chapterSlug === entry.chapterSlug
+            )
+        ),
+      ].slice(0, 50)
 
-  function updatePreferences(input: Partial<ReaderPreferences>) {
-    const nextPreferences = { ...preferences, ...input }
-    setPreferences(nextPreferences)
-    readerStorage.setPreferences(nextPreferences)
-  }
+      readerStorage.setProgress(nextProgress)
+      return nextProgress
+    })
 
-  function clearDemoData() {
+    setLibrary((currentLibrary) => {
+      const nextLibrary = currentLibrary.map((libraryEntry) =>
+        libraryEntry.mangaId === entry.mangaId
+          ? {
+              ...libraryEntry,
+              updatedAt: entry.updatedAt,
+              latestProgress: entry,
+            }
+          : libraryEntry
+      )
+
+      readerStorage.setLibrary(nextLibrary)
+      return nextLibrary
+    })
+  }, [])
+
+  const updatePreferences = useCallback((input: Partial<ReaderPreferences>) => {
+    setPreferences((currentPreferences) => {
+      const nextPreferences = { ...currentPreferences, ...input }
+      readerStorage.setPreferences(nextPreferences)
+      return nextPreferences
+    })
+  }, [])
+
+  const clearDemoData = useCallback(() => {
     setSession(null)
     setProfiles([])
     setLibrary([])
     setProgress([])
     setPreferences(defaultPreferences)
     readerStorage.clear()
-  }
+  }, [])
+
+  const value = useMemo(
+    () => ({
+      hydrated,
+      session,
+      profiles,
+      library,
+      progress,
+      preferences,
+      login,
+      register,
+      logout,
+      setLibraryStatus,
+      updateProgress,
+      updatePreferences,
+      clearDemoData,
+    }),
+    [
+      clearDemoData,
+      hydrated,
+      library,
+      login,
+      logout,
+      preferences,
+      profiles,
+      progress,
+      register,
+      session,
+      setLibraryStatus,
+      updatePreferences,
+      updateProgress,
+    ]
+  )
 
   return (
-    <ReadRinkuContext.Provider
-      value={{
-        hydrated,
-        session,
-        profiles,
-        library,
-        progress,
-        preferences,
-        login,
-        register,
-        logout,
-        setLibraryStatus,
-        updateProgress,
-        updatePreferences,
-        clearDemoData,
-      }}
-    >
+    <ReadRinkuContext.Provider value={value}>
       {children}
     </ReadRinkuContext.Provider>
   )

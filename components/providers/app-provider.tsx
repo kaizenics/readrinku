@@ -1,19 +1,13 @@
 "use client"
 
-import { ThemeProvider } from "next-themes"
-
 import { ReadRinkuProvider } from "@/components/providers/read-rinku-provider"
+import { ThemeProvider } from "@/components/providers/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-    >
+    <ThemeProvider>
       <TooltipProvider>
         <ReadRinkuProvider>
           {children}

@@ -1,10 +1,10 @@
 "use client"
 
-import { useTheme } from "next-themes"
 import { TrashIcon } from "@phosphor-icons/react"
 import { toast } from "sonner"
 
 import { useReadRinku } from "@/components/providers/read-rinku-provider"
+import { useTheme } from "@/components/providers/theme-provider"
 import { Button } from "@/components/ui/button"
 import {
   Field,
