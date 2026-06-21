@@ -28,19 +28,25 @@ export function FeaturedManga({ manga }: { manga: MangadexMangaPreview[] }) {
 function FeaturedMangaCarousel({ manga }: { manga: MangadexMangaPreview[] }) {
   const [api, setApi] = useState<CarouselApi>()
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [snapCount, setSnapCount] = useState(0)
 
   useEffect(() => {
     if (!api) {
       return
     }
 
-    const onSelect = () => setSelectedIndex(api.selectedScrollSnap())
+    const onSelect = () => {
+      setSelectedIndex(api.selectedScrollSnap())
+      setSnapCount(api.scrollSnapList().length)
+    }
 
     onSelect()
     api.on("select", onSelect)
+    api.on("reInit", onSelect)
 
     return () => {
       api.off("select", onSelect)
+      api.off("reInit", onSelect)
     }
   }, [api])
 
@@ -144,9 +150,9 @@ function FeaturedMangaCarousel({ manga }: { manga: MangadexMangaPreview[] }) {
       </Carousel>
 
       <div className="flex justify-center gap-1.5">
-        {manga.map((entry, index) => (
+        {Array.from({ length: snapCount }).map((_, index) => (
           <button
-            key={entry.id}
+            key={index}
             type="button"
             onClick={() => api?.scrollTo(index)}
             className={cn(

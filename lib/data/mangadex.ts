@@ -246,6 +246,7 @@ function mapPreview(entity: MangadexMangaEntity): MangadexMangaPreview | null {
     updatedAt: entity.attributes?.updatedAt ?? new Date(0).toISOString(),
     chapterCount: parseChapterCount(entity.attributes?.lastChapter),
     lastChapterLabel: lastChapter ? `Ch. ${lastChapter}` : "Chapter unavailable",
+    recentChapters: [],
   }
 }
 
@@ -393,9 +394,33 @@ export async function browseMangadexManga(
   ) ?? []
 
   return {
-    items,
+    items: await enrichMangadexPreviews(items),
     total: response?.total ?? items.length,
   }
+}
+
+async function getMangadexPreviewChapters(mangaId: string) {
+  let chapters = await getMangadexChapters(mangaId, {
+    limit: 3,
+    translatedLanguage: ["en"],
+  })
+
+  if (chapters.length === 0) {
+    chapters = await getMangadexChapters(mangaId, {
+      limit: 3,
+    })
+  }
+
+  return chapters.slice(0, 3)
+}
+
+async function enrichMangadexPreviews(items: MangadexMangaPreview[]) {
+  return Promise.all(
+    items.map(async (item) => ({
+      ...item,
+      recentChapters: await getMangadexPreviewChapters(item.id),
+    }))
+  )
 }
 
 export const getFeaturedMangadexManga = cache(async (limit = 8) => {

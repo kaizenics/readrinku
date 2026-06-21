@@ -1,17 +1,19 @@
 "use client"
 
-import { BookmarkSimpleIcon } from "@phosphor-icons/react"
+import { BookmarkSimpleIcon, CaretDownIcon } from "@phosphor-icons/react"
 import { toast } from "sonner"
 
 import { useReadRinku } from "@/components/providers/read-rinku-provider"
+import { Button } from "@/components/ui/button"
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { libraryStatusLabels } from "@/lib/readrinku"
 import type { LibraryStatus } from "@/lib/types/readrinku"
 
@@ -21,35 +23,52 @@ export function LibrarySelect({ mangaId }: { mangaId: string }) {
   const { library, setLibraryStatus } = useReadRinku()
 
   const currentValue = library.find((entry) => entry.mangaId === mangaId)?.status
+  const currentLabel = currentValue ? libraryStatusLabels[currentValue] : "Not saved"
+
+  function handleValueChange(value: string) {
+    if (value === "none") {
+      setLibraryStatus(mangaId)
+      toast.success("Removed from your library.")
+      return
+    }
+
+    setLibraryStatus(mangaId, value as LibraryStatus)
+    toast.success(`Saved to ${libraryStatusLabels[value as LibraryStatus]}.`)
+  }
 
   return (
-    <Select
-      value={currentValue ?? "none"}
-      onValueChange={(value) => {
-        if (value === "none") {
-          setLibraryStatus(mangaId)
-          toast.success("Removed from your library.")
-          return
-        }
-
-        setLibraryStatus(mangaId, value as LibraryStatus)
-        toast.success(`Saved to ${libraryStatusLabels[value as LibraryStatus]}.`)
-      }}
-    >
-      <SelectTrigger size="default" className="w-full sm:w-48">
-        <BookmarkSimpleIcon data-icon="inline-start" />
-        <SelectValue placeholder="Save to library" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectGroup>
-          <SelectItem value="none">Not saved</SelectItem>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          className="min-h-11 w-full justify-between px-3 sm:w-[13rem]"
+        >
+          <span className="inline-flex min-w-0 items-center gap-2">
+            <BookmarkSimpleIcon data-icon="inline-start" />
+            <span className="truncate">Library</span>
+          </span>
+          <span className="inline-flex min-w-0 items-center gap-2 text-muted-foreground">
+            <span className="truncate">{currentLabel}</span>
+            <CaretDownIcon data-icon="inline-end" />
+          </span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-[13rem]">
+        <DropdownMenuLabel>Save this title</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuRadioGroup
+          value={currentValue ?? "none"}
+          onValueChange={handleValueChange}
+        >
+          <DropdownMenuRadioItem value="none">Not saved</DropdownMenuRadioItem>
           {statuses.map((status) => (
-            <SelectItem key={status} value={status}>
+            <DropdownMenuRadioItem key={status} value={status}>
               {libraryStatusLabels[status]}
-            </SelectItem>
+            </DropdownMenuRadioItem>
           ))}
-        </SelectGroup>
-      </SelectContent>
-    </Select>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

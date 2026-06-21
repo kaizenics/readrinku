@@ -9,7 +9,7 @@ import {
 
 export default async function HomePage() {
   const [featured, recentlyUpdated, popular, completed] = await Promise.all([
-    getFeaturedMangadexManga(8),
+    getFeaturedMangadexManga(16),
     getRecentMangadexManga(6),
     getPopularMangadexManga(6),
     getCompletedMangadexManga(6),

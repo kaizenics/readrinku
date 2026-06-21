@@ -99,6 +99,7 @@ export interface MangadexMangaPreview {
   updatedAt: string
   chapterCount: number
   lastChapterLabel: string
+  recentChapters: MangadexChapterInfo[]
 }
 
 export interface ReadingProgress {

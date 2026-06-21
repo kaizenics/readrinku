@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardTitle } from "@/components/ui/card"
 import {
   contentRatingLabels,
+  formatDateLabel,
   formatRelativeLabel,
   mangaStatusLabels,
 } from "@/lib/readrinku"
@@ -57,13 +58,36 @@ export function LiveMangaCard({ manga }: { manga: MangadexMangaPreview }) {
             </p>
           </div>
 
-          <div className="mt-4 rounded-md border px-3 py-2 text-xs">
-            <div className="flex items-center justify-between gap-3">
-              <span className="truncate text-foreground">{manga.lastChapterLabel}</span>
-              <span className="shrink-0 text-muted-foreground">
-                {formatRelativeLabel(manga.updatedAt)}
-              </span>
-            </div>
+          <div className="mt-4 flex min-h-[8.5rem] flex-col gap-2">
+            {(manga.recentChapters.length > 0
+              ? manga.recentChapters
+              : [
+                  {
+                    id: `${manga.id}-fallback`,
+                    mangaId: manga.id,
+                    title: manga.lastChapterLabel,
+                    chapter: manga.lastChapterLabel.replace("Ch. ", ""),
+                    releaseDate: manga.updatedAt,
+                    pageCount: 0,
+                    readable: false,
+                    translatedLanguage: "unknown",
+                  },
+                ]
+            ).slice(0, 3).map((chapter) => (
+              <div
+                key={chapter.id}
+                className="flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-xs"
+              >
+                <span className="truncate text-foreground">
+                  {chapter.chapter ? `Ch. ${chapter.chapter}` : chapter.title}
+                </span>
+                <span className="shrink-0 text-muted-foreground">
+                  {chapter.releaseDate
+                    ? formatRelativeLabel(chapter.releaseDate)
+                    : formatDateLabel(manga.updatedAt)}
+                </span>
+              </div>
+            ))}
           </div>
 
           <div className="mt-auto flex items-center justify-between pt-4 text-sm">
