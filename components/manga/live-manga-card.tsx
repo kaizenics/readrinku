@@ -18,7 +18,7 @@ export function LiveMangaCard({ manga }: { manga: MangadexMangaPreview }) {
       <CardContent className="flex h-full gap-4 p-4">
         <Link
           href={`/manga/${manga.id}`}
-          className="relative block w-28 shrink-0 self-stretch overflow-hidden rounded-md border bg-muted sm:w-32"
+          className="relative block w-38 shrink-0 self-stretch overflow-hidden rounded-md border bg-muted sm:w-52"
         >
           {manga.image ? (
             <Image
