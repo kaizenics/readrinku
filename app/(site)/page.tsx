@@ -70,7 +70,7 @@ export default async function HomePage() {
         <header
           className="relative h-[60vh] overflow-hidden"
           style={{
-            backgroundImage: "url('/manhwa.jpg')",
+            backgroundImage: "url('/manhwa.png')",
             backgroundPosition: "center 20%",
             backgroundRepeat: "no-repeat",
             backgroundSize: "cover",
