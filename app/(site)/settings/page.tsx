@@ -1,4 +1,14 @@
+import type { Metadata } from "next"
+
 import { SettingsPanel } from "@/components/settings/settings-panel"
+import { buildNoIndexMetadata } from "@/lib/seo"
+
+export const metadata: Metadata = buildNoIndexMetadata({
+  title: "Settings",
+  description:
+    "Adjust theme, reader defaults, and local demo persistence settings for the ReadRinku manga reader.",
+  path: "/settings",
+})
 
 export default function SettingsPage() {
   return (

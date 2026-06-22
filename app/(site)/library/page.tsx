@@ -1,5 +1,15 @@
+import type { Metadata } from "next"
+
 import { LibraryBoard } from "@/components/manga/library-board"
 import { mangaRepository } from "@/lib/data/manga-repository"
+import { buildNoIndexMetadata } from "@/lib/seo"
+
+export const metadata: Metadata = buildNoIndexMetadata({
+  title: "Library",
+  description:
+    "Manage your saved manga library, reading intent, and local demo tracking inside ReadRinku.",
+  path: "/library",
+})
 
 export default async function LibraryPage() {
   const manga = await mangaRepository.getAll()
