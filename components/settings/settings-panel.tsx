@@ -4,12 +4,10 @@ import { TrashIcon } from "@phosphor-icons/react"
 import { toast } from "sonner"
 
 import { useReadRinku } from "@/components/providers/read-rinku-provider"
-import { useTheme } from "@/components/providers/theme-provider"
 import { Button } from "@/components/ui/button"
 import {
   Field,
   FieldContent,
-  FieldDescription,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field"
@@ -29,30 +27,10 @@ import {
 
 export function SettingsPanel() {
   const { preferences, updatePreferences, clearDemoData } = useReadRinku()
-  const { theme, setTheme } = useTheme()
 
   return (
     <div className="quiet-panel rounded-xl p-4 sm:p-6">
       <FieldGroup>
-        <Field orientation="responsive">
-          <FieldLabel htmlFor="theme">Theme</FieldLabel>
-          <FieldContent>
-            <Select value={theme} onValueChange={setTheme}>
-              <SelectTrigger id="theme" className="w-full sm:w-52">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="system">System</SelectItem>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            <FieldDescription>Uses the installed shadcn theme tokens only.</FieldDescription>
-          </FieldContent>
-        </Field>
-
         <Field orientation="responsive">
           <FieldLabel htmlFor="reader-mode">Default reader mode</FieldLabel>
           <FieldContent>
@@ -169,9 +147,9 @@ export function SettingsPanel() {
               <TrashIcon data-icon="inline-start" />
               Clear storage
             </Button>
-            <FieldDescription>
+            <p className="text-sm text-muted-foreground">
               Removes the demo session, saved library, history, and reader preferences.
-            </FieldDescription>
+            </p>
           </FieldContent>
         </Field>
       </FieldGroup>

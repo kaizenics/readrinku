@@ -6,7 +6,7 @@ import { CheckCircleIcon, InfoIcon, WarningIcon, XCircleIcon, SpinnerIcon } from
 import { useTheme } from "@/components/providers/theme-provider"
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+  const { theme = "dark" } = useTheme()
 
   return (
     <Sonner

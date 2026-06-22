@@ -5,7 +5,6 @@ import { BookOpenIcon, DoorOpenIcon, HouseIcon, MagnifyingGlassIcon, StackIcon, 
 import { usePathname } from "next/navigation"
 import { toast } from "sonner"
 
-import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { cn } from "@/lib/utils"
 import { useReadRinku } from "@/components/providers/read-rinku-provider"
 import { Button } from "@/components/ui/button"
@@ -61,7 +60,6 @@ export function SiteHeader() {
         </div>
 
         <div className="flex items-center gap-2">
-          <ThemeToggle />
           {session ? (
             <>
               <div className="hidden text-right sm:block">
