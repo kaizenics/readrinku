@@ -50,22 +50,22 @@ function applyThemeToDocument(nextResolvedTheme: ResolvedTheme) {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() =>
-    typeof window === "undefined" ? "system" : getStoredTheme()
-  )
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() =>
-    typeof window === "undefined" ? "light" : getResolvedTheme(getStoredTheme())
-  )
+  const [theme, setThemeState] = useState<Theme>("system")
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light")
 
   useEffect(() => {
     applyThemeToDocument(resolvedTheme)
   }, [resolvedTheme])
 
   useEffect(() => {
-    const storedTheme = getStoredTheme()
+    const syncTheme = () => {
+      const storedTheme = getStoredTheme()
 
-    setThemeState(storedTheme)
-    setResolvedTheme(getResolvedTheme(storedTheme))
+      setThemeState(storedTheme)
+      setResolvedTheme(getResolvedTheme(storedTheme))
+    }
+
+    syncTheme()
   }, [])
 
   useEffect(() => {

@@ -76,8 +76,8 @@ export function SiteFooter() {
         </div>
 
         <div className="flex flex-col gap-2 border-t pt-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>&copy; {year} ReadRinku. Frontend prototype for educational use.</p>
-          <p>Minimal interface, persistent reading progress, and live catalog browsing.</p>
+          <p>&copy; {year} ReadRinku</p>
+
         </div>
       </div>
     </footer>
