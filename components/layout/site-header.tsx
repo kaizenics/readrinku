@@ -5,6 +5,7 @@ import { BookOpenIcon, DoorOpenIcon, HouseIcon, MagnifyingGlassIcon, StackIcon, 
 import { usePathname } from "next/navigation"
 import { toast } from "sonner"
 
+import { HeaderSearch } from "@/components/layout/header-search"
 import { cn } from "@/lib/utils"
 import { useReadRinku } from "@/components/providers/read-rinku-provider"
 import { Button } from "@/components/ui/button"
@@ -27,8 +28,8 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background">
-      <div className="page-frame flex h-16 items-center justify-between gap-4">
-        <div className="flex items-center gap-6">
+      <div className="page-frame flex min-h-16 items-center justify-between gap-4 py-2">
+        <div className="flex min-w-0 flex-1 items-center gap-6">
           <Link href="/" className="flex items-center gap-3">
             <span className="flex size-9 items-center justify-center rounded-md border bg-muted">
               <BookOpenIcon />
@@ -57,9 +58,19 @@ export function SiteHeader() {
               </Link>
             ))}
           </nav>
+
+          <div className="hidden min-w-0 lg:block lg:w-[min(34vw,28rem)]">
+            <HeaderSearch />
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
+          <Button asChild variant="outline" size="sm" className="h-11 px-3 lg:hidden">
+            <Link href="/browse" aria-label="Search manga or manhwa">
+              <MagnifyingGlassIcon />
+              <span className="hidden sm:inline">Search</span>
+            </Link>
+          </Button>
           {session ? (
             <>
               <div className="hidden text-right sm:block">
