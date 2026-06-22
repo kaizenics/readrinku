@@ -1,0 +1,4 @@
+interface:
+  display_name: "Comick Source API"
+  short_description: "Uses Comick Source API for multi-source manga data."
+  default_prompt: "Use $comick-source-api to integrate or debug Comick Source API source adapters."
