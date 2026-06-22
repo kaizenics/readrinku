@@ -81,16 +81,11 @@ export default async function HomePage() {
           <div className="relative z-10 flex h-full items-end">
             <div className="page-frame w-full pb-12 sm:pb-16 lg:pb-20">
               <div className="max-w-4xl space-y-4">
-                <p className="text-sm font-medium uppercase tracking-[0.24em] text-amber-100/82">
-                  Online manga reader
-                </p>
                 <h1 className="max-w-3xl font-heading text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
-                  Read manga online with a cleaner, calmer reading flow
+                  Read Manga Online for Free without Ads
                 </h1>
                 <p className="max-w-3xl text-base leading-8 text-white/74 sm:text-lg">
-                  ReadRinku helps you browse live manga titles, open readable chapters,
-                  and keep track of progress with a layout built for longer reading
-                  sessions on desktop and mobile.
+                  Browse live manga titles, open available chapters, and track local reading progress.
                 </p>
               </div>
             </div>
