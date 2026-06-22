@@ -1,5 +1,5 @@
 import { LiveMangaCard } from "@/components/manga/live-manga-card"
-import type { MangadexMangaPreview } from "@/lib/types/readrinku"
+import type { SourceMangaPreview } from "@/lib/types/readrinku"
 
 export function LiveMangaShelf({
   title,
@@ -8,7 +8,7 @@ export function LiveMangaShelf({
 }: {
   title: string
   description?: string
-  manga: MangadexMangaPreview[]
+  manga: SourceMangaPreview[]
 }) {
   return (
     <section className="flex flex-col gap-5">

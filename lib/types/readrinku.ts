@@ -29,6 +29,7 @@ export interface Chapter {
   releaseDate: string
   pageCount: number
   readable: boolean
+  sourceUrl?: string
   pages?: MangaPage[]
 }
 
@@ -36,7 +37,8 @@ export interface Manga {
   id: string
   slug: string
   title: string
-  mangadexId?: string
+  sourceId?: string
+  sourceUrl?: string
   tagline: string
   synopsis: string
   coverImage: string
@@ -51,7 +53,7 @@ export interface Manga {
   chapters: Chapter[]
 }
 
-export interface MangadexChapterInfo {
+export interface SourceChapterInfo {
   id: string
   mangaId: string
   title: string
@@ -60,9 +62,10 @@ export interface MangadexChapterInfo {
   pageCount: number
   readable: boolean
   translatedLanguage: string
+  url: string
 }
 
-export interface MangadexMangaInfo {
+export interface SourceMangaInfo {
   id: string
   title: string
   altTitles: string[] | null
@@ -76,15 +79,18 @@ export interface MangadexMangaInfo {
   readingDirection: ReadingDirection
   updatedAt: string
   chapterCount: number
-  chapters: MangadexChapterInfo[]
+  chapters: SourceChapterInfo[]
+  url: string
+  sourceId: string
+  sourceName: string
 }
 
-export interface MangadexTag {
+export interface SourceTag {
   id: string
   name: string
 }
 
-export interface MangadexMangaPreview {
+export interface SourceMangaPreview {
   id: string
   title: string
   altTitles: string[]
@@ -99,8 +105,14 @@ export interface MangadexMangaPreview {
   updatedAt: string
   chapterCount: number
   lastChapterLabel: string
-  recentChapters: MangadexChapterInfo[]
+  recentChapters: SourceChapterInfo[]
+  sourceUrl: string
 }
+
+export type MangadexChapterInfo = SourceChapterInfo
+export type MangadexMangaInfo = SourceMangaInfo
+export type MangadexTag = SourceTag
+export type MangadexMangaPreview = SourceMangaPreview
 
 export interface ReadingProgress {
   mangaId: string

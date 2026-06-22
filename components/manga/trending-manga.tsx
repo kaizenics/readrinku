@@ -8,9 +8,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import type { MangadexMangaPreview } from "@/lib/types/readrinku"
+import type { SourceMangaPreview } from "@/lib/types/readrinku"
 
-export function TrendingManga({ manga }: { manga: MangadexMangaPreview[] }) {
+export function TrendingManga({ manga }: { manga: SourceMangaPreview[] }) {
   if (!manga.length) {
     return null
   }
@@ -18,9 +18,9 @@ export function TrendingManga({ manga }: { manga: MangadexMangaPreview[] }) {
   return (
     <Card className="border bg-card/80">
       <CardHeader className="border-b">
-        <CardTitle className="text-2xl font-semibold tracking-tight">Trending</CardTitle>
+        <CardTitle className="text-2xl font-semibold tracking-tight">More to read</CardTitle>
         <CardDescription>
-          Live suggestions from MangaDex popular titles.
+          Additional live picks from the Brainrot Comics source.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">

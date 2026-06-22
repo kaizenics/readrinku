@@ -68,8 +68,8 @@ export function SiteFooter() {
                 </Link>
               ))}
               <p className="pt-2 leading-6">
-                Live manga data and chapter listings are powered by MangaDex for this
-                frontend build.
+                Live chapter data is powered by the Comick Source API with Brainrot
+                Comics as the primary source for this frontend build.
               </p>
             </div>
           </div>

@@ -12,10 +12,10 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel"
 import { Button } from "@/components/ui/button"
-import type { MangadexMangaPreview } from "@/lib/types/readrinku"
+import type { SourceMangaPreview } from "@/lib/types/readrinku"
 import { cn } from "@/lib/utils"
 
-export function FeaturedManga({ manga }: { manga: MangadexMangaPreview[] }) {
+export function FeaturedManga({ manga }: { manga: SourceMangaPreview[] }) {
   const items = manga.filter((entry) => entry.image)
 
   if (items.length === 0) {
@@ -25,7 +25,7 @@ export function FeaturedManga({ manga }: { manga: MangadexMangaPreview[] }) {
   return <FeaturedMangaCarousel manga={items} />
 }
 
-function FeaturedMangaCarousel({ manga }: { manga: MangadexMangaPreview[] }) {
+function FeaturedMangaCarousel({ manga }: { manga: SourceMangaPreview[] }) {
   const [api, setApi] = useState<CarouselApi>()
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [snapCount, setSnapCount] = useState(0)
@@ -73,7 +73,7 @@ function FeaturedMangaCarousel({ manga }: { manga: MangadexMangaPreview[] }) {
         <div className="flex items-center gap-2">
           <span className="inline-flex h-8 items-center gap-2 rounded-sm bg-primary px-3 text-sm font-medium text-primary-foreground">
             <FireIcon />
-            Popular manga
+            Brainrot picks
           </span>
         </div>
 
@@ -85,7 +85,7 @@ function FeaturedMangaCarousel({ manga }: { manga: MangadexMangaPreview[] }) {
             className="rounded-sm"
             onClick={() => api?.scrollPrev()}
             disabled={!api?.canScrollPrev()}
-            aria-label="Previous popular manga"
+            aria-label="Previous featured manga"
           >
             <CaretLeftIcon />
           </Button>
@@ -106,7 +106,7 @@ function FeaturedMangaCarousel({ manga }: { manga: MangadexMangaPreview[] }) {
 
               api.scrollTo(0)
             }}
-            aria-label="Next popular manga"
+            aria-label="Next featured manga"
           >
             <CaretRightIcon />
           </Button>
@@ -161,7 +161,7 @@ function FeaturedMangaCarousel({ manga }: { manga: MangadexMangaPreview[] }) {
                 ? "w-6 bg-primary"
                 : "w-2 bg-border hover:bg-muted-foreground"
             )}
-            aria-label={`Go to popular manga ${index + 1}`}
+            aria-label={`Go to featured manga ${index + 1}`}
           />
         ))}
       </div>

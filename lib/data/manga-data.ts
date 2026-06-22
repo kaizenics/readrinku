@@ -19,7 +19,7 @@ export const mangaCatalog: Manga[] = [
     id: "letters-after-rain",
     slug: "letters-after-rain",
     title: "Letters After Rain",
-    mangadexId: "259dfd8a-f06a-4825-8fa6-a2dcd7274230",
+    sourceId: "259dfd8a-f06a-4825-8fa6-a2dcd7274230",
     tagline: "A courier keeps delivering messages that arrive one season too late.",
     synopsis:
       "In a harbor district that never quite dries, Minato bikes through evening rain with a stack of letters meant for people who have already moved on. One delivery uncovers a forgotten lane, a vanished recipient, and the feeling that some stories wait patiently for the right reader.",

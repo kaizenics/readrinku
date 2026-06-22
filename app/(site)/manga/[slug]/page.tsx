@@ -6,8 +6,8 @@ import {
 } from "@phosphor-icons/react/ssr"
 
 import { CoverImage } from "@/components/manga/cover-image"
-import { MangadexChapterList } from "@/components/manga/mangadex-chapter-list"
 import { LibrarySelect } from "@/components/manga/library-select"
+import { SourceChapterList } from "@/components/manga/source-chapter-list"
 import { SynopsisPreview } from "@/components/manga/synopsis-preview"
 import { TrendingManga } from "@/components/manga/trending-manga"
 import { Badge } from "@/components/ui/badge"
@@ -19,7 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { getPopularMangadexManga } from "@/lib/data/mangadex"
+import { getPrimarySourceLabel, getRecentSourceManga } from "@/lib/data/source"
 import { getMangaInfoBySlug } from "@/lib/data/manga-info"
 import {
   contentRatingLabels,
@@ -35,14 +35,14 @@ export default async function MangaDetailsPage({
   const { slug } = await params
   const [result, trending] = await Promise.all([
     getMangaInfoBySlug(slug),
-    getPopularMangadexManga(6),
+    getRecentSourceManga(6),
   ])
 
   if (!result) {
     notFound()
   }
 
-  const { manga, mangadexInfo, display } = result
+  const { manga, sourceInfo, display } = result
   const latestReadableChapter = manga.chapters.find((chapter) => chapter.readable)
   const suggestedManga = trending.filter((entry) => entry.id !== manga.id).slice(0, 5)
 
@@ -59,7 +59,7 @@ export default async function MangaDetailsPage({
               <Badge>{mangaStatusLabels[manga.status]}</Badge>
               <Badge variant="secondary">{contentRatingLabels[manga.contentRating]}</Badge>
               <Badge variant="outline">{manga.readingDirection.toUpperCase()}</Badge>
-              <Badge variant="outline">MangaDex</Badge>
+              <Badge variant="outline">{getPrimarySourceLabel()}</Badge>
             </div>
             <div className="flex flex-col gap-1">
               <CardDescription className="uppercase tracking-[0.24em]">
@@ -125,12 +125,12 @@ export default async function MangaDetailsPage({
             <div className="rounded-lg border bg-background/60 p-3">
               <dt className="text-muted-foreground">Chapters</dt>
               <dd className="mt-1 font-medium">
-                {mangadexInfo.chapters.length} available entries
+                {sourceInfo.chapters.length} available entries
               </dd>
             </div>
             <div className="rounded-lg border bg-background/60 p-3">
               <dt className="text-muted-foreground">Source</dt>
-              <dd className="mt-1 font-medium">Official MangaDex API</dd>
+              <dd className="mt-1 font-medium">Comick Source API via Brainrot Comics</dd>
             </div>
           </CardContent>
         </Card>
@@ -138,7 +138,7 @@ export default async function MangaDetailsPage({
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
         <div className="min-w-0">
-          <MangadexChapterList chapters={mangadexInfo.chapters} />
+          <SourceChapterList chapters={sourceInfo.chapters} />
         </div>
         <aside className="xl:sticky xl:top-24 xl:self-start">
           <TrendingManga manga={suggestedManga} />

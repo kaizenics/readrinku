@@ -5,23 +5,13 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "uploads.mangadex.org",
-        pathname: "/covers/**",
+        hostname: "brainrotcomics.com",
+        pathname: "/wp-content/uploads/**",
       },
       {
         protocol: "https",
-        hostname: "**.mangadex.network",
-        pathname: "/data-saver/**",
-      },
-      {
-        protocol: "https",
-        hostname: "**.mangadex.network",
-        pathname: "/data/**",
-      },
-      {
-        protocol: "https",
-        hostname: "mangadex.org",
-        pathname: "/**",
+        hostname: "cdn.discordapp.com",
+        pathname: "/attachments/**",
       },
     ],
   },

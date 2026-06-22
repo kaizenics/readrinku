@@ -10,10 +10,10 @@ import {
   formatRelativeLabel,
   mangaStatusLabels,
 } from "@/lib/readrinku"
-import { getMangaCardSummary } from "@/lib/data/mangadex"
-import type { MangadexMangaPreview } from "@/lib/types/readrinku"
+import { getMangaCardSummary } from "@/lib/data/source"
+import type { SourceMangaPreview } from "@/lib/types/readrinku"
 
-export function LiveMangaCard({ manga }: { manga: MangadexMangaPreview }) {
+export function LiveMangaCard({ manga }: { manga: SourceMangaPreview }) {
   return (
     <Card className="group relative h-full overflow-hidden border bg-card">
       <CardContent className="flex h-full gap-4 p-4">
@@ -71,6 +71,7 @@ export function LiveMangaCard({ manga }: { manga: MangadexMangaPreview }) {
                     pageCount: 0,
                     readable: false,
                     translatedLanguage: "unknown",
+                    url: manga.sourceUrl,
                   },
                 ]
             ).slice(0, 3).map((chapter) => (

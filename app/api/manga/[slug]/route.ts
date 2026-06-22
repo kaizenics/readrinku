@@ -13,15 +13,15 @@ export async function GET(
     return Response.json({ message: "Manga not found." }, { status: 404 })
   }
 
-  const { manga, mangadexInfo, source, display } = result
+  const { manga, sourceInfo, source, display } = result
 
   return Response.json({
     source,
-    provider: "mangadex",
+    provider: "brainrotcomics",
     manga: {
       id: manga.id,
       slug: manga.slug,
-      mangadexId: manga.mangadexId ?? null,
+      sourceUrl: manga.sourceUrl ?? null,
       title: display.title,
       altTitles: display.altTitles,
       tagline: manga.tagline,
@@ -35,13 +35,14 @@ export async function GET(
       updatedAt: manga.updatedAt,
       chapterCount: display.chapterCount,
     },
-    chapters: mangadexInfo.chapters.map((chapter) => ({
+    chapters: sourceInfo.chapters.map((chapter) => ({
       id: chapter.id,
       title: chapter.title,
       chapter: chapter.chapter,
       releaseDate: chapter.releaseDate,
       pageCount: chapter.pageCount,
       readable: chapter.readable,
+      sourceUrl: chapter.url,
       href: chapter.readable ? `/read/${manga.slug}/${chapter.id}` : null,
     })),
   })

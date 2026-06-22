@@ -3,14 +3,14 @@ import "server-only"
 import { cache } from "react"
 
 import {
-  getMangadexChapterPages,
-  getMangadexMangaInfo,
-} from "@/lib/data/mangadex"
-import type { Chapter, Manga, MangadexMangaInfo } from "@/lib/types/readrinku"
+  getSourceChapterPages,
+  getSourceMangaInfo,
+} from "@/lib/data/source"
+import type { Chapter, Manga, SourceMangaInfo } from "@/lib/types/readrinku"
 
 export interface MangaInfoResult {
   manga: Manga
-  mangadexInfo: MangadexMangaInfo
+  sourceInfo: SourceMangaInfo
   source: "remote"
   display: {
     title: string
@@ -30,7 +30,7 @@ function toTagline(value: string) {
 }
 
 function mapChapterToLocal(
-  chapter: MangadexMangaInfo["chapters"][number],
+  chapter: SourceMangaInfo["chapters"][number],
   index: number
 ): Chapter {
   const parsedNumber = Number.parseFloat(chapter.chapter ?? "")
@@ -42,16 +42,18 @@ function mapChapterToLocal(
     releaseDate: chapter.releaseDate ?? new Date(0).toISOString(),
     pageCount: chapter.pageCount,
     readable: chapter.readable,
+    sourceUrl: chapter.url,
   }
 }
 
-function toLocalManga(info: MangadexMangaInfo): Manga {
+function toLocalManga(info: SourceMangaInfo): Manga {
   const chapters = info.chapters.map(mapChapterToLocal)
 
   return {
     id: info.id,
     slug: info.id,
-    mangadexId: info.id,
+    sourceId: info.sourceId,
+    sourceUrl: info.url,
     title: info.title,
     tagline: toTagline(info.synopsis),
     synopsis: info.synopsis,
@@ -69,24 +71,24 @@ function toLocalManga(info: MangadexMangaInfo): Manga {
 }
 
 export const getMangaInfoBySlug = cache(async (slug: string) => {
-  const mangadexInfo = await getMangadexMangaInfo(slug)
+  const sourceInfo = await getSourceMangaInfo(slug)
 
-  if (!mangadexInfo) {
+  if (!sourceInfo) {
     return null
   }
 
-  const manga = toLocalManga(mangadexInfo)
+  const manga = toLocalManga(sourceInfo)
 
   return {
     manga,
-    mangadexInfo,
+    sourceInfo,
     source: "remote" as const,
     display: {
-      title: mangadexInfo.title,
-      altTitles: mangadexInfo.altTitles ?? [],
-      genres: mangadexInfo.genres ?? ["Uncategorized"],
-      coverImage: mangadexInfo.image,
-      chapterCount: mangadexInfo.chapterCount || mangadexInfo.chapters.length,
+      title: sourceInfo.title,
+      altTitles: sourceInfo.altTitles ?? [],
+      genres: sourceInfo.genres ?? ["Uncategorized"],
+      coverImage: sourceInfo.image,
+      chapterCount: sourceInfo.chapterCount || sourceInfo.chapters.length,
     },
   } satisfies MangaInfoResult
 })
@@ -107,7 +109,13 @@ export const getReaderMangaByIds = cache(
       return null
     }
 
-    const pages = await getMangadexChapterPages(chapterSlug)
+    const chapterSourceUrl = result.manga.chapters[chapterIndex]?.sourceUrl
+
+    if (!chapterSourceUrl) {
+      return null
+    }
+
+    const pages = await getSourceChapterPages(chapterSourceUrl)
 
     if (!pages.length) {
       return null

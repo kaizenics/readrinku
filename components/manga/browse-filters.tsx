@@ -28,15 +28,10 @@ import {
 } from "@/components/ui/sheet"
 
 export function BrowseFilters({
-  genres,
   initial,
 }: {
-  genres: Array<{ id: string; name: string }>
   initial: {
     q: string
-    genre: string
-    status: string
-    rating: string
     sort: string
   }
 }) {
@@ -71,9 +66,6 @@ export function BrowseFilters({
 
   const hasActiveFilters =
     Boolean(initial.q) ||
-    Boolean(initial.genre) ||
-    Boolean(initial.status) ||
-    Boolean(initial.rating) ||
     initial.sort !== "updated"
 
   return (
@@ -91,7 +83,7 @@ export function BrowseFilters({
         <SheetHeader>
           <SheetTitle>Browse filters</SheetTitle>
           <SheetDescription>
-            Search and refine the manga list without leaving the page.
+            Search the source and keep the query in the URL without leaving the page.
           </SheetDescription>
         </SheetHeader>
 
@@ -108,65 +100,6 @@ export function BrowseFilters({
           </InputGroup>
 
           <Select
-            value={initial.genre || "all"}
-            onValueChange={(value) =>
-              updateParams({ genre: value === "all" ? "" : value })
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Genre" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="all">All genres</SelectItem>
-                {genres.map((genre) => (
-                  <SelectItem key={genre.id} value={genre.id}>
-                    {genre.name}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={initial.status || "all"}
-            onValueChange={(value) =>
-              updateParams({ status: value === "all" ? "" : value })
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="all">All status</SelectItem>
-                <SelectItem value="ongoing">Ongoing</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="hiatus">Hiatus</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={initial.rating || "all"}
-            onValueChange={(value) =>
-              updateParams({ rating: value === "all" ? "" : value })
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Rating" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="all">All ratings</SelectItem>
-                <SelectItem value="everyone">Everyone</SelectItem>
-                <SelectItem value="teen">Teen</SelectItem>
-                <SelectItem value="mature">Mature</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-
-          <Select
             value={initial.sort}
             onValueChange={(value) => updateParams({ sort: value })}
           >
@@ -176,9 +109,8 @@ export function BrowseFilters({
             <SelectContent>
               <SelectGroup>
                 <SelectItem value="updated">Recently updated</SelectItem>
-                <SelectItem value="popular">Popular</SelectItem>
                 <SelectItem value="title">Title</SelectItem>
-                <SelectItem value="newest">Newest added</SelectItem>
+                <SelectItem value="chapters">Most chapters</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
