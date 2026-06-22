@@ -21,7 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { getPrimarySourceLabel, getRecentSourceManga } from "@/lib/data/source"
+import { getRecentSourceManga } from "@/lib/data/source"
 import { getMangaInfoBySlug } from "@/lib/data/manga-info"
 import {
   contentRatingLabels,
@@ -151,7 +151,7 @@ export default async function MangaDetailsPage({
                   {contentRatingLabels[manga.contentRating]}
                 </Badge>
                 <Badge variant="outline">{manga.readingDirection.toUpperCase()}</Badge>
-                <Badge variant="outline">{getPrimarySourceLabel()}</Badge>
+                <Badge variant="outline">Live source</Badge>
               </div>
               <div className="flex flex-col gap-1">
                 <CardDescription className="uppercase tracking-[0.24em]">
@@ -232,9 +232,7 @@ export default async function MangaDetailsPage({
               </div>
               <div className="rounded-lg border bg-background/60 p-3">
                 <dt className="text-muted-foreground">Source</dt>
-                <dd className="mt-1 font-medium">
-                  Comick Source API via Brainrot Comics
-                </dd>
+                <dd className="mt-1 font-medium">Live chapter feed</dd>
               </div>
             </CardContent>
           </Card>

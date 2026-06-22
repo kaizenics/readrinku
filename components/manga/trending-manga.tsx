@@ -19,9 +19,7 @@ export function TrendingManga({ manga }: { manga: SourceMangaPreview[] }) {
     <Card className="border bg-card/80">
       <CardHeader className="border-b">
         <CardTitle className="text-2xl font-semibold tracking-tight">More to read</CardTitle>
-        <CardDescription>
-          Additional live picks from the Brainrot Comics source.
-        </CardDescription>
+        <CardDescription>Additional live picks readers can jump into next.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         {manga.map((entry) => (

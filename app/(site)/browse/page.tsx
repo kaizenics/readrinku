@@ -94,7 +94,7 @@ export default async function BrowsePage({
         <BrowseFilters initial={initial} />
         <LiveMangaShelf
           title={`${result.total} result${result.total === 1 ? "" : "s"}`}
-          description="These manga results are fetched server-side through the Comick Source API with Arya Scans as the main source."
+          description="These manga results are fetched server-side and updated from the current live catalog."
           manga={result.items}
         />
       </div>

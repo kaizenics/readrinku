@@ -69,11 +69,11 @@ function FeaturedMangaCarousel({ manga }: { manga: SourceMangaPreview[] }) {
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3 border-t pt-3">
+      <div className="flex items-center justify-between gap-3 pt-3">
         <div className="flex items-center gap-2">
           <span className="inline-flex h-8 items-center gap-2 rounded-sm bg-primary px-3 text-sm font-medium text-primary-foreground">
             <FireIcon />
-            Brainrot picks
+            Popular now
           </span>
         </div>
 
