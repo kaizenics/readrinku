@@ -51,7 +51,7 @@ export function BrowseFilters({
   }
 
   useEffect(() => {
-    updateParams({ q: deferredQuery })
+    updateParams({ q: deferredQuery, page: "" })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deferredQuery])
 
@@ -76,7 +76,7 @@ export function BrowseFilters({
 
         <Select
           value={initial.sort}
-          onValueChange={(value) => updateParams({ sort: value })}
+          onValueChange={(value) => updateParams({ sort: value, page: "" })}
         >
           <SelectTrigger className="h-11 w-full lg:w-56">
             <SelectValue placeholder="Sort" />

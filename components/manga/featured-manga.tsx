@@ -12,6 +12,7 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel"
 import { Button } from "@/components/ui/button"
+import { RemoteCoverImage } from "@/components/manga/remote-cover-image"
 import type { SourceMangaPreview } from "@/lib/types/readrinku"
 import { cn } from "@/lib/utils"
 
@@ -126,12 +127,12 @@ function FeaturedMangaCarousel({ manga }: { manga: SourceMangaPreview[] }) {
                   className="group block overflow-hidden rounded-sm border bg-card"
                 >
                   <div className="relative aspect-[7/9] w-full overflow-hidden">
-                    <Image
+                    <RemoteCoverImage
                       src={entry.image ?? ""}
                       alt={entry.title}
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 18vw"
+                      imageClassName="transition-transform duration-300 group-hover:scale-[1.03]"
+                      fallbackLabel={entry.title}
                     />
                     <div className="absolute inset-x-0 bottom-0 bg-black/82 px-2 py-2 text-white">
                       <p className="line-clamp-2 text-sm font-medium leading-tight">

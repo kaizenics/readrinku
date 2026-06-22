@@ -14,11 +14,11 @@ export interface SourceDefinition {
   imageRemotePatterns: SourceImageRemotePattern[]
 }
 
-export const sourceDefinitions = [
+export const sourceDefinitions: readonly SourceDefinition[] = [
   {
     id: "arya-scans",
-    name: "arya scans",
-    label: "Live Source",
+    name: "Arya Scans",
+    label: "Live catalog",
     baseUrl: "https://brainrotcomics.com",
     imageRemotePatterns: [
       {
@@ -33,7 +33,25 @@ export const sourceDefinitions = [
       },
     ],
   },
-] as const satisfies readonly SourceDefinition[]
+  {
+    id: "demonicscans",
+    name: "DemonicScans",
+    label: "DemonicScans",
+    baseUrl: "https://demonicscans.org",
+    imageRemotePatterns: [
+      {
+        protocol: "https",
+        hostname: "readermc.org",
+        pathname: "/images/**",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.demoniclibs.com",
+        pathname: "/**",
+      },
+    ],
+  },
+]
 
 export const DEFAULT_SOURCE_ID = sourceDefinitions[0].id
 

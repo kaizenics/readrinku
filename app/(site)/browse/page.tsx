@@ -1,15 +1,69 @@
 import type { Metadata } from "next"
+import { Fragment } from "react"
 
 import { JsonLd } from "@/components/seo/json-ld"
 import { BrowseFilters } from "@/components/manga/browse-filters"
 import { LiveMangaShelf } from "@/components/manga/live-manga-shelf"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 import { browseSourceManga } from "@/lib/data/source"
 import { absoluteUrl, buildMetadata } from "@/lib/seo"
 
 type SearchValue = string | string[] | undefined
+const BROWSE_PAGE_SIZE = 24
 
 function toSingle(value: SearchValue) {
   return Array.isArray(value) ? value[0] ?? "" : value ?? ""
+}
+
+function toPage(value: SearchValue) {
+  const parsed = Number.parseInt(toSingle(value), 10)
+
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return 1
+  }
+
+  return parsed
+}
+
+function buildBrowseHref(
+  params: Record<string, SearchValue>,
+  nextPage: number
+) {
+  const search = new URLSearchParams()
+
+  for (const [key, value] of Object.entries(params)) {
+    const currentValue = toSingle(value)
+
+    if (!currentValue || key === "page") {
+      continue
+    }
+
+    search.set(key, currentValue)
+  }
+
+  if (nextPage > 1) {
+    search.set("page", String(nextPage))
+  }
+
+  const query = search.toString()
+  return query ? `/browse?${query}` : "/browse"
+}
+
+function getVisiblePages(currentPage: number, totalPages: number) {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1)
+  }
+
+  const pages = new Set([1, totalPages, currentPage - 1, currentPage, currentPage + 1])
+  return [...pages].filter((page) => page >= 1 && page <= totalPages).sort((a, b) => a - b)
 }
 
 export async function generateMetadata({
@@ -33,7 +87,7 @@ export async function generateMetadata({
   return buildMetadata({
     title: "Browse Manga",
     description:
-      "Browse manga titles, compare recent updates, and discover readable series from the ReadRinku source feed.",
+      "Browse manga titles, compare recent updates, and discover readable series from the ReadRinku source catalog.",
     path: "/browse",
     keywords: ["browse manga", "manga search", "manga discovery"],
   })
@@ -45,6 +99,7 @@ export default async function BrowsePage({
   searchParams: Promise<Record<string, SearchValue>>
 }) {
   const params = await searchParams
+  const currentPage = toPage(params.page)
 
   const initial = {
     q: toSingle(params.q),
@@ -54,8 +109,14 @@ export default async function BrowsePage({
   const result = await browseSourceManga({
     q: initial.q,
     sort: initial.sort,
-    limit: 12,
+    limit: BROWSE_PAGE_SIZE,
+    page: currentPage,
   })
+  const totalPages = Math.max(1, Math.ceil(result.total / BROWSE_PAGE_SIZE))
+  const normalizedPage = Math.min(currentPage, totalPages)
+  const startResult = result.total === 0 ? 0 : (normalizedPage - 1) * BROWSE_PAGE_SIZE + 1
+  const endResult = Math.min(normalizedPage * BROWSE_PAGE_SIZE, result.total)
+  const visiblePages = getVisiblePages(normalizedPage, totalPages)
 
   const pageSchema = [
     {
@@ -88,15 +149,62 @@ export default async function BrowsePage({
           </h1>
           <p className="max-w-2xl text-sm text-muted-foreground">
             Search live manga titles, compare recent updates, and keep the current
-            browse state in the URL for sharable discovery.
+            browse state in the URL for sharable discovery across multiple sources.
           </p>
         </div>
         <BrowseFilters initial={initial} />
         <LiveMangaShelf
           title={`${result.total} result${result.total === 1 ? "" : "s"}`}
-          description="These manga results are fetched server-side and updated from the current live catalog."
+          description="These manga results are fetched server-side and updated from the current live source catalog."
           manga={result.items}
         />
+        {result.total > BROWSE_PAGE_SIZE ? (
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-muted-foreground">
+              Showing {startResult}-{endResult} of {result.total} titles.
+            </p>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href={buildBrowseHref(params, Math.max(1, normalizedPage - 1))}
+                    aria-disabled={normalizedPage <= 1}
+                    className={normalizedPage <= 1 ? "pointer-events-none opacity-50" : undefined}
+                  />
+                </PaginationItem>
+                {visiblePages.map((page, index) => {
+                  const previousPage = visiblePages[index - 1]
+                  const needsEllipsis = previousPage && page - previousPage > 1
+
+                  return (
+                    <Fragment key={page}>
+                      {needsEllipsis ? (
+                        <PaginationItem>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      ) : null}
+                      <PaginationItem>
+                        <PaginationLink
+                          href={buildBrowseHref(params, page)}
+                          isActive={page === normalizedPage}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    </Fragment>
+                  )
+                })}
+                <PaginationItem>
+                  <PaginationNext
+                    href={buildBrowseHref(params, Math.min(totalPages, normalizedPage + 1))}
+                    aria-disabled={normalizedPage >= totalPages}
+                    className={normalizedPage >= totalPages ? "pointer-events-none opacity-50" : undefined}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        ) : null}
       </div>
     </>
   )

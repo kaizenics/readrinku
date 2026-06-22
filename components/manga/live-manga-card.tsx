@@ -4,6 +4,7 @@ import { ArrowRightIcon, BookOpenTextIcon } from "@phosphor-icons/react/ssr"
 
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardTitle } from "@/components/ui/card"
+import { RemoteCoverImage } from "@/components/manga/remote-cover-image"
 import {
   contentRatingLabels,
   formatDateLabel,
@@ -22,14 +23,18 @@ export function LiveMangaCard({ manga }: { manga: SourceMangaPreview }) {
           className="relative block w-38 shrink-0 self-stretch overflow-hidden rounded-md border bg-muted sm:w-52"
         >
           {manga.image ? (
-            <Image
+            <RemoteCoverImage
               src={manga.image}
               alt={manga.title}
-              fill
-              className="object-cover transition-transform duration-200 group-hover:scale-[1.02]"
               sizes="(max-width: 640px) 112px, 128px"
+              imageClassName="transition-transform duration-200 group-hover:scale-[1.02]"
+              fallbackLabel={manga.title}
             />
-          ) : null}
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-muted/60 p-4 text-center text-xs font-medium text-muted-foreground">
+              <span className="line-clamp-3">{manga.title}</span>
+            </div>
+          )}
         </Link>
 
         <div className="flex min-w-0 flex-1 flex-col">

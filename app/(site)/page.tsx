@@ -19,7 +19,7 @@ import {
 export const metadata: Metadata = buildMetadata({
   title: "Online Manga Reader and Manga Discovery",
   description:
-    "Browse live manga titles, open available chapters, and track local reading progress with a cleaner online manga reader built for calmer reading sessions.",
+    "Browse live manga titles from multiple sources, open available chapters, and track local reading progress with a cleaner online manga reader built for calmer reading sessions.",
   path: "/",
   keywords: [
     "manga homepage",
@@ -85,7 +85,7 @@ export default async function HomePage() {
                   Read Manga Online for Free without Ads
                 </h1>
                 <p className="max-w-3xl text-base leading-8 text-white/74 sm:text-lg">
-                  Browse live manga titles, open available chapters, and track local reading progress.
+                  Browse live manga titles from multiple sources, open available chapters, and track local reading progress.
                 </p>
               </div>
             </div>

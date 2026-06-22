@@ -9,6 +9,7 @@ export interface SourceBrowseFilters {
   q?: string
   sort?: string
   limit?: number
+  page?: number
 }
 
 export interface SourceBrowseResult {

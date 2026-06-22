@@ -13,9 +13,11 @@ import {
 } from "@/lib/data/sources/source-config"
 import {
   getDefaultSourceAdapter,
+  getAllSourceAdapters,
   getSourceAdapter,
   listSourceDefinitions,
 } from "@/lib/data/sources/registry"
+import { sortSourceMangaPreviews } from "@/lib/data/sources/create-comick-source-adapter"
 import type {
   SourceBrowseFilters,
   SourceBrowseResult,
@@ -27,6 +29,16 @@ import type {
   SourceMangaPreview,
 } from "@/lib/types/readrinku"
 
+const ALL_SOURCE_ID = "all"
+
+function clampPage(value: number | undefined) {
+  if (!value || !Number.isFinite(value) || value < 1) {
+    return 1
+  }
+
+  return Math.floor(value)
+}
+
 function summarizeSynopsis(value: string, maxLength = 170) {
   if (value.length <= maxLength) {
     return value
@@ -37,6 +49,10 @@ function summarizeSynopsis(value: string, maxLength = 170) {
 
 function getAdapter(sourceId: string) {
   return getSourceAdapter(sourceId) ?? getDefaultSourceAdapter()
+}
+
+function isAllSources(sourceId: string) {
+  return sourceId === ALL_SOURCE_ID
 }
 
 function normalizeChapterInfo(
@@ -77,7 +93,19 @@ function normalizeMangaPreview(
 export type { SourceBrowseFilters, SourceBrowseResult }
 
 export const getSourceHomepageManga = cache(
-  async (limit = 18, sourceId: string = DEFAULT_SOURCE_ID) => {
+  async (limit = 18, sourceId: string = ALL_SOURCE_ID) => {
+    if (isAllSources(sourceId)) {
+      const results = await Promise.all(
+        getAllSourceAdapters().map(async (adapter) => {
+          const items = await adapter.getHomepageManga(limit)
+
+          return items.map((item) => normalizeMangaPreview(item, adapter.definition.id))
+        })
+      )
+
+      return sortSourceMangaPreviews(results.flat(), "updated").slice(0, limit)
+    }
+
     const adapter = getAdapter(sourceId)
     const items = await adapter.getHomepageManga(limit)
 
@@ -87,8 +115,40 @@ export const getSourceHomepageManga = cache(
 
 export async function browseSourceManga(
   filters: SourceBrowseFilters = {},
-  sourceId: string = DEFAULT_SOURCE_ID
+  sourceId: string = ALL_SOURCE_ID
 ): Promise<SourceBrowseResult> {
+  if (isAllSources(sourceId)) {
+    const limit = filters.limit ?? 24
+    const page = clampPage(filters.page)
+    const results = await Promise.all(
+      getAllSourceAdapters().map(async (adapter) => {
+        const result = await adapter.browse({
+          ...filters,
+          limit: undefined,
+          page: 1,
+        })
+
+        return {
+          items: result.items.map((item) =>
+            normalizeMangaPreview(item, adapter.definition.id)
+          ),
+        }
+      })
+    )
+
+    const allItems = sortSourceMangaPreviews(
+      results.flatMap((result) => result.items),
+      filters.sort
+    )
+    const start = (page - 1) * limit
+    const items = allItems.slice(start, start + limit)
+
+    return {
+      items,
+      total: allItems.length,
+    }
+  }
+
   const adapter = getAdapter(sourceId)
   const result = await adapter.browse(filters)
 
@@ -101,28 +161,28 @@ export async function browseSourceManga(
 }
 
 export const getFeaturedSourceManga = cache(
-  async (limit = 10, sourceId: string = DEFAULT_SOURCE_ID) => {
+  async (limit = 10, sourceId: string = ALL_SOURCE_ID) => {
     const items = await getSourceHomepageManga(Math.max(limit, 10), sourceId)
     return items.slice(0, limit)
   }
 )
 
 export const getRecentSourceManga = cache(
-  async (limit = 6, sourceId: string = DEFAULT_SOURCE_ID) => {
+  async (limit = 6, sourceId: string = ALL_SOURCE_ID) => {
     const items = await getSourceHomepageManga(Math.max(limit, 12), sourceId)
     return items.slice(0, limit)
   }
 )
 
 export const getSpotlightSourceManga = cache(
-  async (limit = 6, sourceId: string = DEFAULT_SOURCE_ID) => {
+  async (limit = 6, sourceId: string = ALL_SOURCE_ID) => {
     const items = await getSourceHomepageManga(Math.max(limit + 6, 12), sourceId)
     return items.slice(6, 6 + limit)
   }
 )
 
 export const getArchiveSourceManga = cache(
-  async (limit = 6, sourceId: string = DEFAULT_SOURCE_ID) => {
+  async (limit = 6, sourceId: string = ALL_SOURCE_ID) => {
     const items = await getSourceHomepageManga(Math.max(limit + 12, 18), sourceId)
     return items.slice(12, 12 + limit)
   }
@@ -148,6 +208,10 @@ export function getMangaCardSummary(value: SourceMangaPreview) {
 }
 
 export function getPrimarySourceLabel(sourceId: string = DEFAULT_SOURCE_ID) {
+  if (isAllSources(sourceId)) {
+    return "All sources"
+  }
+
   return getSourceDefinition(sourceId).label
 }
 
@@ -156,6 +220,7 @@ export function getAvailableSources() {
 }
 
 export {
+  ALL_SOURCE_ID,
   DEFAULT_SOURCE_ID,
   decodeSourceMangaSlug,
   encodeSourceMangaSlug,

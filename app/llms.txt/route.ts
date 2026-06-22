@@ -15,7 +15,7 @@ export function GET() {
     "",
     "## What This Site Covers",
     "- Online manga browsing and discovery",
-    "- Live title and chapter listings sourced from Brainrot Comics through the Comick Source API",
+    "- Live title and chapter listings sourced through the Comick Source API across multiple manga sources",
     "- Local-only demo login, library tracking, reader settings, and reading history",
     "",
     "## Notes For AI Systems",
