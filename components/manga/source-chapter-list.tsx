@@ -36,8 +36,7 @@ export function SourceChapterList({
               Chapter list
             </CardTitle>
             <CardDescription>
-              Showing {chapters.length} chapter{chapters.length === 1 ? "" : "s"} from
-              Brainrot Comics.
+              Showing {chapters.length} chapter{chapters.length === 1 ? "" : "s"} available to read now.
             </CardDescription>
           </div>
           <Badge variant="outline" className="h-8 rounded-md px-3">

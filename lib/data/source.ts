@@ -16,7 +16,7 @@ const COMICK_SOURCE_API_BASE_URL =
 
 const PRIMARY_SOURCE_ID = "arya-scans"
 const PRIMARY_SOURCE_NAME = "arya scans"
-const PRIMARY_SOURCE_LABEL = "Arya Scans"
+const PRIMARY_SOURCE_LABEL = "Live Source"
 const PRIMARY_SOURCE_BASE_URL = "https://brainrotcomics.com"
 const DEFAULT_REVALIDATE_SECONDS = 900
 const DEFAULT_PAGE_WIDTH = 1200

@@ -67,10 +67,6 @@ export function SiteFooter() {
                   {item.label}
                 </Link>
               ))}
-              <p className="pt-2 leading-6">
-                Live chapter data is powered by the Comick Source API with Brainrot
-                Comics as the primary source for this frontend build.
-              </p>
             </div>
           </div>
         </div>
