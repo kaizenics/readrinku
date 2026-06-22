@@ -1,5 +1,15 @@
+import type { Metadata } from "next"
+
 import { HistoryList } from "@/components/manga/history-list"
 import { mangaRepository } from "@/lib/data/manga-repository"
+import { buildNoIndexMetadata } from "@/lib/seo"
+
+export const metadata: Metadata = buildNoIndexMetadata({
+  title: "History",
+  description:
+    "Review your local ReadRinku reading history and jump back into recently opened manga chapters.",
+  path: "/history",
+})
 
 export default async function HistoryPage() {
   const manga = await mangaRepository.getAll()

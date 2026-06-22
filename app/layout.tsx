@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 
 import { AppProvider } from "@/components/providers/app-provider"
+import { indexRobots, siteConfig } from "@/lib/seo"
 
 import "./globals.css"
 
@@ -27,12 +28,44 @@ const themeInitScript = `(() => {
 })()`
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.siteUrl),
   title: {
-    default: "ReadRinku",
-    template: "%s | ReadRinku",
+    default: siteConfig.name,
+    template: `%s | ${siteConfig.name}`,
   },
-  description:
-    "A minimalist manga reading frontend prototype built with shadcn/ui and Phosphor icons.",
+  description: siteConfig.description,
+  applicationName: siteConfig.name,
+  keywords: [...siteConfig.keywords],
+  authors: [{ name: siteConfig.name, url: siteConfig.siteUrl }],
+  creator: siteConfig.name,
+  publisher: siteConfig.name,
+  category: siteConfig.category,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: siteConfig.name,
+    description: siteConfig.description,
+    url: "/",
+    siteName: siteConfig.name,
+    locale: siteConfig.locale,
+    type: "website",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: siteConfig.name,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteConfig.name,
+    description: siteConfig.description,
+    images: ["/opengraph-image"],
+  },
+  robots: indexRobots,
 }
 
 export default function RootLayout({

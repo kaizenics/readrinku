@@ -1,7 +1,16 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 
 import { AuthForm } from "@/components/auth/auth-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { buildNoIndexMetadata } from "@/lib/seo"
+
+export const metadata: Metadata = buildNoIndexMetadata({
+  title: "Register",
+  description:
+    "Create a local-only ReadRinku demo profile to save reader preferences, reading history, and library progress in your browser.",
+  path: "/register",
+})
 
 export default function RegisterPage() {
   return (
