@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
+import { isSameSourceMangaId } from "@/lib/data/sources/route-id"
 import { formatRelativeLabel } from "@/lib/readrinku"
 import type { Manga } from "@/lib/types/readrinku"
 
@@ -33,7 +34,9 @@ export function HistoryList({ manga }: { manga: Manga[] }) {
   return (
     <div className="flex flex-col gap-3">
       {progress.map((entry) => {
-        const currentManga = manga.find((item) => item.id === entry.mangaId)
+        const currentManga = manga.find((item) =>
+          isSameSourceMangaId(item.id, entry.mangaId)
+        )
 
         if (!currentManga) {
           return null

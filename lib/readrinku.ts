@@ -1,5 +1,6 @@
 import { format, formatDistanceToNow } from "date-fns"
 
+import { isSameSourceMangaId } from "@/lib/data/sources/route-id"
 import type {
   ContentRating,
   DirectionBehavior,
@@ -99,7 +100,7 @@ export function getMangaProgress(
 ): ReadingProgress | undefined {
   return [...progress]
     .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
-    .find((entry) => entry.mangaId === mangaId)
+    .find((entry) => isSameSourceMangaId(entry.mangaId, mangaId))
 }
 
 export function getProgressPercent(entry?: ReadingProgress) {

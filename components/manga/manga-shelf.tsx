@@ -1,3 +1,4 @@
+import { isSameSourceMangaId } from "@/lib/data/sources/route-id"
 import { MangaCard } from "@/components/manga/manga-card"
 import type { Manga, ReadingProgress } from "@/lib/types/readrinku"
 
@@ -23,7 +24,7 @@ export function MangaShelf({
           <MangaCard
             key={entry.id}
             manga={entry}
-            progress={progress.find((item) => item.mangaId === entry.id)}
+            progress={progress.find((item) => isSameSourceMangaId(item.mangaId, entry.id))}
           />
         ))}
       </div>

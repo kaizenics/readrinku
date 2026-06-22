@@ -115,7 +115,10 @@ export const getReaderMangaByIds = cache(
       return null
     }
 
-    const pages = await getSourceChapterPages(chapterSourceUrl)
+    const pages = await getSourceChapterPages(
+      chapterSourceUrl,
+      result.sourceInfo.sourceId
+    )
 
     if (!pages.length) {
       return null

@@ -37,6 +37,7 @@ import {
   readerModeLabels,
   readerWidthLabels,
 } from "@/lib/readrinku"
+import { isSameSourceMangaId } from "@/lib/data/sources/route-id"
 import type { Chapter, Manga, ReadingDirection } from "@/lib/types/readrinku"
 import { cn } from "@/lib/utils"
 
@@ -66,7 +67,8 @@ export function MangaReader({
   const pages = useMemo(() => chapter.pages ?? [], [chapter.pages])
   const saved = progress.find(
     (entry) =>
-      entry.mangaId === manga.id && entry.chapterSlug === chapter.slug
+      isSameSourceMangaId(entry.mangaId, manga.id) &&
+      entry.chapterSlug === chapter.slug
   )
   const [currentPage, setCurrentPage] = useState(saved?.page ?? 1)
   const [showControls, setShowControls] = useState(true)

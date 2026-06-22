@@ -10,6 +10,7 @@ import {
   useState,
 } from "react"
 
+import { isSameSourceMangaId } from "@/lib/data/sources/route-id"
 import { defaultDemoCredentials, getMangaProgress } from "@/lib/readrinku"
 import { defaultPreferences, readerStorage } from "@/lib/storage/reader-storage"
 import type {
@@ -152,17 +153,23 @@ export function ReadRinkuProvider({ children }: { children: React.ReactNode }) {
     setLibrary((currentLibrary) => {
       const nextEntries = status
         ? [
-            ...currentLibrary.filter((entry) => entry.mangaId !== mangaId),
+            ...currentLibrary.filter(
+              (entry) => !isSameSourceMangaId(entry.mangaId, mangaId)
+            ),
             {
               mangaId,
               status,
               addedAt:
-                currentLibrary.find((entry) => entry.mangaId === mangaId)?.addedAt ?? now,
+                currentLibrary.find((entry) =>
+                  isSameSourceMangaId(entry.mangaId, mangaId)
+                )?.addedAt ?? now,
               updatedAt: now,
               latestProgress,
             },
           ]
-        : currentLibrary.filter((entry) => entry.mangaId !== mangaId)
+        : currentLibrary.filter(
+            (entry) => !isSameSourceMangaId(entry.mangaId, mangaId)
+          )
 
       readerStorage.setLibrary(nextEntries)
       return nextEntries
@@ -173,7 +180,7 @@ export function ReadRinkuProvider({ children }: { children: React.ReactNode }) {
     setProgress((currentProgress) => {
       const existingEntry = currentProgress.find(
         (current) =>
-          current.mangaId === entry.mangaId &&
+          isSameSourceMangaId(current.mangaId, entry.mangaId) &&
           current.chapterSlug === entry.chapterSlug
       )
 
@@ -191,7 +198,7 @@ export function ReadRinkuProvider({ children }: { children: React.ReactNode }) {
         ...currentProgress.filter(
           (current) =>
             !(
-              current.mangaId === entry.mangaId &&
+              isSameSourceMangaId(current.mangaId, entry.mangaId) &&
               current.chapterSlug === entry.chapterSlug
             )
         ),
@@ -203,7 +210,7 @@ export function ReadRinkuProvider({ children }: { children: React.ReactNode }) {
 
     setLibrary((currentLibrary) => {
       const nextLibrary = currentLibrary.map((libraryEntry) =>
-        libraryEntry.mangaId === entry.mangaId
+        isSameSourceMangaId(libraryEntry.mangaId, entry.mangaId)
           ? {
               ...libraryEntry,
               updatedAt: entry.updatedAt,

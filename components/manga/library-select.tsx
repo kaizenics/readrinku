@@ -14,6 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { isSameSourceMangaId } from "@/lib/data/sources/route-id"
 import { libraryStatusLabels } from "@/lib/readrinku"
 import type { LibraryStatus } from "@/lib/types/readrinku"
 
@@ -22,7 +23,9 @@ const statuses: LibraryStatus[] = ["reading", "planned", "completed", "bookmarke
 export function LibrarySelect({ mangaId }: { mangaId: string }) {
   const { library, setLibraryStatus } = useReadRinku()
 
-  const currentValue = library.find((entry) => entry.mangaId === mangaId)?.status
+  const currentValue = library.find((entry) =>
+    isSameSourceMangaId(entry.mangaId, mangaId)
+  )?.status
   const currentLabel = currentValue ? libraryStatusLabels[currentValue] : "Not saved"
 
   function handleValueChange(value: string) {

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { isSameSourceMangaId } from "@/lib/data/sources/route-id"
 import { libraryStatusLabels } from "@/lib/readrinku"
 import type { LibraryStatus, Manga } from "@/lib/types/readrinku"
 
@@ -33,7 +34,7 @@ export function LibraryBoard({ manga }: { manga: Manga[] }) {
           .filter((entry) => entry.status === status)
           .map((entry) => ({
             entry,
-            manga: manga.find((item) => item.id === entry.mangaId),
+            manga: manga.find((item) => isSameSourceMangaId(item.id, entry.mangaId)),
           }))
           .filter((item) => item.manga)
 

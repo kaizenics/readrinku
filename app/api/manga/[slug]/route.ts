@@ -17,7 +17,7 @@ export async function GET(
 
   return Response.json({
     source,
-    provider: "brainrotcomics",
+    provider: sourceInfo.sourceId,
     manga: {
       id: manga.id,
       slug: manga.slug,

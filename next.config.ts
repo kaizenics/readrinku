@@ -1,19 +1,10 @@
 import type { NextConfig } from "next";
 
+import { getSourceImageRemotePatterns } from "./lib/data/sources/source-config";
+
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "brainrotcomics.com",
-        pathname: "/wp-content/uploads/**",
-      },
-      {
-        protocol: "https",
-        hostname: "cdn.discordapp.com",
-        pathname: "/attachments/**",
-      },
-    ],
+    remotePatterns: getSourceImageRemotePatterns(),
   },
 };
 
