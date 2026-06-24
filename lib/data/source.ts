@@ -23,6 +23,7 @@ import {
   sortChaptersDescending,
   sortSourceMangaPreviews,
 } from "@/lib/data/sources/create-comick-source-adapter"
+import { getMyAnimeListMetadata } from "@/lib/data/myanimelist"
 import type { SourceAdapter } from "@/lib/data/sources/types"
 import type {
   SourceBrowseFilters,
@@ -353,6 +354,34 @@ export const getArchiveSourceManga = cache(
   }
 )
 
+// Overlay MyAnimeList metadata (cover, synopsis, genres, authors, status,
+// rating, publish dates) when a confident title match exists. Chapters and the
+// source identity are never touched. Best-effort: no match → source data.
+async function enrichWithMyAnimeList(
+  info: SourceMangaInfo
+): Promise<SourceMangaInfo> {
+  const mal = await getMyAnimeListMetadata(info.title, info.altTitles ?? [])
+
+  if (!mal) {
+    return info
+  }
+
+  return {
+    ...info,
+    image: mal.coverImage ?? info.image,
+    synopsis: mal.synopsis?.trim() || info.synopsis,
+    genres: mal.genres.length ? mal.genres : info.genres,
+    authors: mal.authors.length ? mal.authors : info.authors,
+    status: mal.status ?? info.status,
+    rating: mal.rating,
+    ratingCount: mal.ratingCount,
+    publishedFrom: mal.publishedFrom,
+    publishedTo: mal.publishedTo,
+    malUrl: mal.malUrl,
+    malType: mal.malType,
+  }
+}
+
 export const getSourceMangaInfo = cache(async (slug: string) => {
   const { sourceId, sourceSlug } = decodeSourceMangaSlug(slug)
   const adapter = getAdapter(sourceId)
@@ -363,7 +392,8 @@ export const getSourceMangaInfo = cache(async (slug: string) => {
   }
 
   const merged = await mergeChaptersAcrossSources(info)
-  return normalizeMangaInfo(merged)
+  const enriched = await enrichWithMyAnimeList(merged)
+  return normalizeMangaInfo(enriched)
 })
 
 export async function getSourceChapterPages(

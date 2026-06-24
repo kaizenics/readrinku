@@ -3,6 +3,8 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import {
   BookOpenIcon,
+  CalendarBlankIcon,
+  StarIcon,
   TextAlignRightIcon,
 } from "@phosphor-icons/react/ssr"
 
@@ -219,6 +221,38 @@ export default async function MangaDetailsPage({
                   {sourceInfo.chapters[0]?.releaseLabel ?? formatDateLabel(manga.updatedAt)}
                 </dd>
               </div>
+              {manga.rating ? (
+                <div className="rounded-lg border bg-background/60 p-3">
+                  <dt className="text-muted-foreground">Rating</dt>
+                  <dd className="mt-1 flex flex-wrap items-center gap-2 font-medium">
+                    <StarIcon weight="fill" className="text-amber-400" />
+                    {manga.rating.toFixed(2)} / 10
+                    {manga.ratingCount ? (
+                      <span className="text-xs font-normal text-muted-foreground">
+                        ({manga.ratingCount.toLocaleString()} ratings)
+                      </span>
+                    ) : null}
+                  </dd>
+                </div>
+              ) : null}
+              {manga.publishedFrom ? (
+                <div className="rounded-lg border bg-background/60 p-3">
+                  <dt className="text-muted-foreground">Published</dt>
+                  <dd className="mt-1 flex items-center gap-2 font-medium">
+                    <CalendarBlankIcon />
+                    {formatDateLabel(manga.publishedFrom)} –{" "}
+                    {manga.publishedTo
+                      ? formatDateLabel(manga.publishedTo)
+                      : "Ongoing"}
+                  </dd>
+                </div>
+              ) : null}
+              {manga.malType ? (
+                <div className="rounded-lg border bg-background/60 p-3">
+                  <dt className="text-muted-foreground">Type</dt>
+                  <dd className="mt-1 font-medium">{manga.malType}</dd>
+                </div>
+              ) : null}
               <div className="rounded-lg border bg-background/60 p-3">
                 <dt className="text-muted-foreground">Direction</dt>
                 <dd className="mt-1 flex items-center gap-2 font-medium">
@@ -236,6 +270,16 @@ export default async function MangaDetailsPage({
                 <dt className="text-muted-foreground">Source</dt>
                 <dd className="mt-1 font-medium">Live chapter feed</dd>
               </div>
+              {manga.malUrl ? (
+                <a
+                  href={manga.malUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-1 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                >
+                  Metadata from MyAnimeList
+                </a>
+              ) : null}
             </CardContent>
           </Card>
         </section>

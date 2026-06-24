@@ -91,8 +91,21 @@ export function getSourceDefinition(sourceId: string) {
   )
 }
 
+// Hosts for external metadata images (MyAnimeList covers via Jikan) that are not
+// tied to a single source.
+const metadataImageRemotePatterns: readonly SourceImageRemotePattern[] = [
+  {
+    protocol: "https",
+    hostname: "cdn.myanimelist.net",
+    pathname: "/**",
+  },
+]
+
 export function getSourceImageRemotePatterns() {
-  return sourceDefinitions.flatMap((definition) => definition.imageRemotePatterns)
+  return [
+    ...sourceDefinitions.flatMap((definition) => definition.imageRemotePatterns),
+    ...metadataImageRemotePatterns,
+  ]
 }
 
 function hostnameMatches(pattern: string, hostname: string) {
@@ -127,10 +140,8 @@ export function isConfiguredImageUrl(value: string | null | undefined) {
       return false
     }
 
-    return sourceDefinitions.some((definition) =>
-      definition.imageRemotePatterns.some((pattern) =>
-        hostnameMatches(pattern.hostname, hostname)
-      )
+    return getSourceImageRemotePatterns().some((pattern) =>
+      hostnameMatches(pattern.hostname, hostname)
     )
   } catch {
     return false

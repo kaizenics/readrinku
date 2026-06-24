@@ -70,6 +70,12 @@ function toLocalManga(info: SourceMangaInfo): Manga {
     chapterCount: info.chapterCount || chapters.length,
     accent: "neutral",
     chapters,
+    rating: info.rating,
+    ratingCount: info.ratingCount,
+    publishedFrom: info.publishedFrom,
+    publishedTo: info.publishedTo,
+    malUrl: info.malUrl,
+    malType: info.malType,
   }
 }
 

@@ -36,7 +36,7 @@ export interface Chapter {
   pages?: MangaPage[]
 }
 
-export interface Manga {
+export interface Manga extends MangaExternalMeta {
   id: string
   slug: string
   title: string
@@ -81,7 +81,20 @@ export interface SourceChapterInfo {
   alternateSources?: ChapterSourceRef[]
 }
 
-export interface SourceMangaInfo {
+export interface MangaExternalMeta {
+  /** Mean score out of 10 (e.g. MyAnimeList). */
+  rating?: number | null
+  ratingCount?: number | null
+  /** ISO date strings for first / last publication. */
+  publishedFrom?: string | null
+  publishedTo?: string | null
+  /** Link to the external metadata source (e.g. MyAnimeList). */
+  malUrl?: string | null
+  /** Media type label from the metadata source, e.g. Manhwa / Manga / Manhua. */
+  malType?: string | null
+}
+
+export interface SourceMangaInfo extends MangaExternalMeta {
   id: string
   title: string
   altTitles: string[] | null
