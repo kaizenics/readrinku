@@ -74,6 +74,7 @@ export type SourceCatalogPage = {
 export type SourceCatalog = {
   pageSize: number
   buildPageUrl: (input: { baseUrl: string; page: number; sort?: string }) => string
+  buildGenreUrl?: (input: { baseUrl: string; page: number; genre: string }) => string
   parsePage: (input: {
     html: string
     baseUrl: string
@@ -899,16 +900,24 @@ export function createComickSourceAdapter(
     })
   }
 
-  const fetchCatalogPage = cache(async (catalogPage: number, sort?: string) => {
+  const fetchCatalogPage = cache(
+    async (catalogPage: number, sort?: string, genre?: string) => {
     if (!catalog) {
       return { previews: [] as SourceMangaPreview[], totalPages: catalogPage }
     }
 
-    const url = catalog.buildPageUrl({
-      baseUrl: definition.baseUrl,
-      page: catalogPage,
-      sort,
-    })
+    const url =
+      genre && catalog.buildGenreUrl
+        ? catalog.buildGenreUrl({
+            baseUrl: definition.baseUrl,
+            page: catalogPage,
+            genre,
+          })
+        : catalog.buildPageUrl({
+            baseUrl: definition.baseUrl,
+            page: catalogPage,
+            sort,
+          })
     const html = await fetchHtml(url)
 
     if (!html) {
@@ -951,7 +960,9 @@ export function createComickSourceAdapter(
     }
 
     const pages = await Promise.all(
-      catalogPageNumbers.map((current) => fetchCatalogPage(current, filters.sort))
+      catalogPageNumbers.map((current) =>
+        fetchCatalogPage(current, filters.sort, filters.genre)
+      )
     )
     const totalPages = pages[0]?.totalPages ?? firstCatalogPage
     const offset = (firstCatalogPage - 1) * pageSize

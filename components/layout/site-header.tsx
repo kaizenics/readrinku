@@ -11,6 +11,15 @@ import { HeaderSearch } from "@/components/layout/header-search"
 import { cn } from "@/lib/utils"
 import { useReadRinku } from "@/components/providers/read-rinku-provider"
 import { Button } from "@/components/ui/button"
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu"
+import { mangaGenres } from "@/lib/genres"
 
 const topLinks = [
   { href: "/", label: "Home", icon: HouseIcon },
@@ -56,6 +65,37 @@ export function SiteHeader() {
                 {label}
               </Link>
             ))}
+
+            <NavigationMenu viewport={false}>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger
+                    className={cn(
+                      "h-auto rounded-md bg-transparent px-3 py-2 text-sm font-normal text-muted-foreground hover:bg-transparent hover:text-foreground focus:bg-transparent data-open:bg-transparent data-open:text-foreground data-popup-open:bg-transparent data-popup-open:text-foreground",
+                      pathname.startsWith("/genre") && "text-foreground"
+                    )}
+                  >
+                    Genres
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <ul className="grid max-h-[70vh] w-[34rem] grid-cols-3 gap-x-3 gap-y-0.5 overflow-y-auto p-2">
+                      {mangaGenres.map((genre) => (
+                        <li key={genre.slug}>
+                          <NavigationMenuLink asChild>
+                            <Link
+                              href={`/genre/${genre.slug}`}
+                              className="block rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            >
+                              {genre.label}
+                            </Link>
+                          </NavigationMenuLink>
+                        </li>
+                      ))}
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
           </nav>
 
           <div className="hidden min-w-0 lg:block lg:w-[min(34vw,28rem)]">

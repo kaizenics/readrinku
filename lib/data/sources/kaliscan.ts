@@ -207,6 +207,12 @@ const catalog: SourceCatalog = {
 
     return url.toString()
   },
+  buildGenreUrl: ({ baseUrl, page, genre }) => {
+    const url = new URL(`/genres/${genre}`, baseUrl)
+    url.searchParams.set("page", String(page))
+
+    return url.toString()
+  },
   parsePage: parseCatalogPage,
 }
 

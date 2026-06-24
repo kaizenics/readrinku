@@ -8,6 +8,7 @@ import type { SourceDefinition } from "@/lib/data/sources/source-config"
 export interface SourceBrowseFilters {
   q?: string
   sort?: string
+  genre?: string
   limit?: number
   page?: number
 }

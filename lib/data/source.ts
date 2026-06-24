@@ -326,6 +326,27 @@ export async function browseSourceManga(
   }
 }
 
+// Genre listings come from the catalog source's /genres/{slug} pages.
+export async function browseGenreManga(
+  genre: string,
+  filters: SourceBrowseFilters = {}
+): Promise<SourceBrowseResult> {
+  const adapter = getAllSourceAdapters().find((entry) => entry.catalog)
+
+  if (!adapter) {
+    return { items: [], total: 0 }
+  }
+
+  const result = await adapter.browse({ ...filters, genre })
+
+  return {
+    items: result.items.map((item) =>
+      normalizeMangaPreview(item, adapter.definition.id)
+    ),
+    total: result.total,
+  }
+}
+
 export const getFeaturedSourceManga = cache(
   async (limit = 10, sourceId: string = ALL_SOURCE_ID) => {
     const items = await getSourceHomepageManga(Math.max(limit, 10), sourceId)
