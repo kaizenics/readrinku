@@ -3,6 +3,14 @@ import { DEFAULT_SOURCE_ID } from "@/lib/data/sources/source-config"
 const SOURCE_ROUTE_SEPARATOR = "~"
 
 export function encodeSourceMangaSlug(sourceId: string, sourceSlug: string) {
+  // The default source uses clean, prefix-less URLs (e.g. /manga/101124-title).
+  // Other sources keep a short prefix because their sites return a page for any
+  // slug, so a bare slug can't be reliably attributed back to them. `decode`
+  // already maps a prefix-less slug to the default source, so this round-trips.
+  if (sourceId === DEFAULT_SOURCE_ID) {
+    return sourceSlug
+  }
+
   return `${sourceId}${SOURCE_ROUTE_SEPARATOR}${sourceSlug}`
 }
 
