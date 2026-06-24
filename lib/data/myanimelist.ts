@@ -5,11 +5,8 @@ import { cache } from "react"
 import { normalizeTitleKey } from "@/lib/data/sources/create-comick-source-adapter"
 import type { MangaStatus } from "@/lib/types/readrinku"
 
-// MyAnimeList metadata, fetched through Jikan (the free, no-key MAL mirror) by
-// default. Set MAL_CLIENT_ID to use the official MAL API instead — same data.
+// MyAnimeList metadata, served through Jikan — the free, no-key MAL API.
 const JIKAN_BASE_URL = "https://api.jikan.moe/v4"
-const MAL_BASE_URL = "https://api.myanimelist.net/v2"
-const MAL_CLIENT_ID = process.env.MAL_CLIENT_ID
 
 // MAL metadata barely changes; cache a full day to stay well under rate limits.
 const REVALIDATE_SECONDS = 86400
@@ -23,25 +20,30 @@ export interface MalMetadata {
   synopsis: string | null
   genres: string[]
   authors: string[]
+  serializations: string[]
+  demographics: string[]
   status: MangaStatus | null
   rating: number | null
   ratingCount: number | null
+  popularity: number | null
   publishedFrom: string | null
   publishedTo: string | null
   malUrl: string | null
   malType: string | null
 }
 
-// Shape shared by both providers after normalization.
 type MalCandidate = {
   titles: string[]
   coverImage: string | null
   synopsis: string | null
   genres: string[]
   authors: string[]
+  serializations: string[]
+  demographics: string[]
   statusRaw: string | null
   rating: number | null
   ratingCount: number | null
+  popularity: number | null
   publishedFrom: string | null
   publishedTo: string | null
   malUrl: string | null
@@ -88,9 +90,9 @@ function unique(values: string[]) {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))]
 }
 
-async function fetchJson(url: string, headers?: Record<string, string>) {
+async function fetchJson(url: string) {
   const response = await fetch(url, {
-    headers: { Accept: "application/json", ...(headers ?? {}) },
+    headers: { Accept: "application/json" },
     next: { revalidate: REVALIDATE_SECONDS },
   }).catch(() => null)
 
@@ -102,80 +104,45 @@ async function fetchJson(url: string, headers?: Record<string, string>) {
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-async function fetchJikanCandidates(query: string): Promise<MalCandidate[]> {
-  const json = await fetchJson(
-    `${JIKAN_BASE_URL}/manga?q=${encodeURIComponent(query)}&limit=25`
-  )
-  const data: any[] = json?.data ?? []
+function names(list: any): string[] {
+  return unique((list ?? []).map((entry: any) => entry?.name).filter(Boolean))
+}
 
-  return data.map((item) => ({
-    titles: unique([
-      item.title,
-      item.title_english,
-      item.title_japanese,
-      ...(item.title_synonyms ?? []),
-    ].filter(Boolean)),
+function toCandidate(item: any): MalCandidate {
+  return {
+    titles: unique(
+      [item.title, item.title_english, item.title_japanese, ...(item.title_synonyms ?? [])].filter(
+        Boolean
+      )
+    ),
     coverImage:
       item.images?.jpg?.large_image_url ??
       item.images?.jpg?.image_url ??
       item.images?.webp?.large_image_url ??
       null,
     synopsis: item.synopsis ?? null,
-    genres: unique(
-      [...(item.genres ?? []), ...(item.themes ?? [])].map((g: any) => g?.name)
-    ),
+    genres: unique([...(item.genres ?? []), ...(item.themes ?? [])].map((g: any) => g?.name)),
     authors: unique((item.authors ?? []).map((a: any) => reformatAuthor(a?.name ?? ""))),
+    serializations: names(item.serializations),
+    demographics: names(item.demographics),
     statusRaw: item.status ?? null,
     rating: typeof item.score === "number" ? item.score : null,
     ratingCount: typeof item.scored_by === "number" ? item.scored_by : null,
+    popularity: typeof item.popularity === "number" ? item.popularity : null,
     publishedFrom: item.published?.from ?? null,
     publishedTo: item.published?.to ?? null,
     malUrl: item.url ?? null,
     type: item.type ?? null,
-  }))
+  }
 }
 
-async function fetchMalCandidates(query: string): Promise<MalCandidate[]> {
-  if (!MAL_CLIENT_ID) {
-    return []
-  }
-
-  const fields =
-    "id,title,main_picture,alternative_titles,synopsis,mean,num_scoring_users,status,media_type,genres,authors{first_name,last_name},start_date,end_date"
+async function fetchJikanCandidates(query: string): Promise<MalCandidate[]> {
   const json = await fetchJson(
-    `${MAL_BASE_URL}/manga?q=${encodeURIComponent(query)}&limit=25&fields=${encodeURIComponent(fields)}`,
-    { "X-MAL-CLIENT-ID": MAL_CLIENT_ID }
+    `${JIKAN_BASE_URL}/manga?q=${encodeURIComponent(query)}&limit=25`
   )
-  const data: { node?: any }[] = json?.data ?? []
+  const data: any[] = json?.data ?? []
 
-  return data
-    .map(({ node }) => node)
-    .filter(Boolean)
-    .map((node) => {
-      const alt = node.alternative_titles ?? {}
-
-      return {
-        titles: unique([node.title, alt.en, alt.ja, ...(alt.synonyms ?? [])].filter(Boolean)),
-        coverImage: node.main_picture?.large ?? node.main_picture?.medium ?? null,
-        synopsis: node.synopsis ?? null,
-        genres: unique((node.genres ?? []).map((g: any) => g?.name)),
-        authors: unique(
-          (node.authors ?? []).map((a: any) =>
-            reformatAuthor(
-              [a?.node?.last_name, a?.node?.first_name].filter(Boolean).join(", ")
-            )
-          )
-        ),
-        statusRaw: node.status ?? null,
-        rating: typeof node.mean === "number" ? node.mean : null,
-        ratingCount:
-          typeof node.num_scoring_users === "number" ? node.num_scoring_users : null,
-        publishedFrom: node.start_date ?? null,
-        publishedTo: node.end_date ?? null,
-        malUrl: `https://myanimelist.net/manga/${node.id}`,
-        type: node.media_type ?? null,
-      }
-    })
+  return data.map(toCandidate)
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
@@ -217,9 +184,7 @@ export const getMyAnimeListMetadata = cache(
     )
 
     try {
-      const candidates = MAL_CLIENT_ID
-        ? await fetchMalCandidates(title)
-        : await fetchJikanCandidates(title)
+      const candidates = await fetchJikanCandidates(title)
       const match = pickBestMatch(candidates, titleKey, altKeys)
 
       if (!match) {
@@ -231,9 +196,12 @@ export const getMyAnimeListMetadata = cache(
         synopsis: match.synopsis,
         genres: match.genres,
         authors: match.authors,
+        serializations: match.serializations,
+        demographics: match.demographics,
         status: mapStatus(match.statusRaw),
         rating: match.rating,
         ratingCount: match.ratingCount,
+        popularity: match.popularity,
         publishedFrom: match.publishedFrom,
         publishedTo: match.publishedTo,
         malUrl: match.malUrl,

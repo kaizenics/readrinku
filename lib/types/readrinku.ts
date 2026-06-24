@@ -85,6 +85,12 @@ export interface MangaExternalMeta {
   /** Mean score out of 10 (e.g. MyAnimeList). */
   rating?: number | null
   ratingCount?: number | null
+  /** MyAnimeList popularity rank (1 = most popular). */
+  popularity?: number | null
+  /** Demographic(s), e.g. Shounen / Seinen. */
+  demographics?: string[] | null
+  /** Serialization / magazine or platform, e.g. KakaoPage. */
+  serializations?: string[] | null
   /** ISO date strings for first / last publication. */
   publishedFrom?: string | null
   publishedTo?: string | null

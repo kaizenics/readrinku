@@ -234,6 +234,12 @@ export default async function MangaDetailsPage({
                   </dd>
                 </div>
               ) : null}
+              {manga.popularity ? (
+                <div className="rounded-lg border bg-background/60 p-3">
+                  <dt className="text-muted-foreground">Popularity</dt>
+                  <dd className="mt-1 font-medium">#{manga.popularity.toLocaleString()}</dd>
+                </div>
+              ) : null}
               {manga.publishedFrom ? (
                 <div className="rounded-lg border bg-background/60 p-3">
                   <dt className="text-muted-foreground">Published</dt>
@@ -250,6 +256,18 @@ export default async function MangaDetailsPage({
                 <div className="rounded-lg border bg-background/60 p-3">
                   <dt className="text-muted-foreground">Type</dt>
                   <dd className="mt-1 font-medium">{manga.malType}</dd>
+                </div>
+              ) : null}
+              {manga.demographics?.length ? (
+                <div className="rounded-lg border bg-background/60 p-3">
+                  <dt className="text-muted-foreground">Demographic</dt>
+                  <dd className="mt-1 font-medium">{manga.demographics.join(", ")}</dd>
+                </div>
+              ) : null}
+              {manga.serializations?.length ? (
+                <div className="rounded-lg border bg-background/60 p-3">
+                  <dt className="text-muted-foreground">Serialization</dt>
+                  <dd className="mt-1 font-medium">{manga.serializations.join(", ")}</dd>
                 </div>
               ) : null}
               <div className="rounded-lg border bg-background/60 p-3">
