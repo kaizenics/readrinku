@@ -507,8 +507,10 @@ function extractMangaDetailsFromHtml(
 }
 
 // Catalog/search listings only expose the latest chapter, so synthesize the
-// most recent few (latest, latest-1, latest-2) for preview cards. These are
-// display-only teasers; the detail page always shows the real chapter list.
+// most recent few (latest, latest-1, latest-2) for preview cards. The id is the
+// chapter number, which is exactly what the reader resolves a chapter by, so the
+// card rows link straight to the reader. The detail page still shows the real
+// full chapter list.
 export function buildRecentChapters({
   slug,
   latestLabel,
@@ -525,22 +527,23 @@ export function buildRecentChapters({
   }
 
   const makeChapter = (label: string): SourceChapterInfo => ({
-    id: `${slug}-recent-${label}`,
+    id: label,
     mangaId: slug,
     title: `Chapter ${label}`,
     chapter: label,
     releaseDate: null,
     pageCount: 0,
-    readable: false,
+    readable: true,
     translatedLanguage: "en",
     url: sourceUrl,
   })
 
-  const chapters = [makeChapter(latestLabel)]
+  const hasNumber = latestNumber !== null && Number.isFinite(latestNumber)
+  const chapters = [makeChapter(hasNumber ? String(latestNumber) : latestLabel)]
 
-  if (latestNumber !== null && Number.isFinite(latestNumber)) {
+  if (hasNumber) {
     for (
-      let value = Math.floor(latestNumber) - 1;
+      let value = Math.floor(latestNumber as number) - 1;
       value >= 1 && chapters.length < 3;
       value -= 1
     ) {

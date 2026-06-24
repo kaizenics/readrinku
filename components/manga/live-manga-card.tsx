@@ -66,34 +66,53 @@ export function LiveMangaCard({ manga }: { manga: SourceMangaPreview }) {
               ? manga.recentChapters
               : [
                   {
-                    id: `${manga.id}-fallback`,
+                    id: manga.lastChapterLabel.replace("Ch. ", ""),
                     mangaId: manga.id,
                     title: manga.lastChapterLabel,
                     chapter: manga.lastChapterLabel.replace("Ch. ", ""),
-                    releaseDate: manga.updatedAt,
+                    releaseDate: null,
                     pageCount: 0,
                     readable: false,
                     translatedLanguage: "unknown",
                     url: manga.sourceUrl,
                   },
                 ]
-            ).slice(0, 3).map((chapter) => (
-              <div
-                key={chapter.id}
-                className="flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-xs"
-              >
-                <span className="truncate text-foreground">
-                  {chapter.chapter ? `Ch. ${chapter.chapter}` : chapter.title}
-                </span>
-                <span className="shrink-0 text-muted-foreground">
-                  {chapter.releaseLabel
-                    ? chapter.releaseLabel
-                    : chapter.releaseDate
-                      ? formatRelativeLabel(chapter.releaseDate)
-                      : null}
-                </span>
-              </div>
-            ))}
+            )
+              .slice(0, 3)
+              .map((chapter) => {
+                const number = chapter.chapter?.trim()
+                const canRead = Boolean(number) && number !== "Chapter unavailable"
+                const rowClassName =
+                  "flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-xs"
+                const rowContent = (
+                  <>
+                    <span className="truncate text-foreground">
+                      {chapter.chapter ? `Ch. ${chapter.chapter}` : chapter.title}
+                    </span>
+                    <span className="shrink-0 text-muted-foreground">
+                      {chapter.releaseLabel
+                        ? chapter.releaseLabel
+                        : chapter.releaseDate
+                          ? formatRelativeLabel(chapter.releaseDate)
+                          : null}
+                    </span>
+                  </>
+                )
+
+                return canRead ? (
+                  <Link
+                    key={chapter.id}
+                    href={`/read/${manga.id}/${chapter.id}`}
+                    className={`${rowClassName} transition-colors hover:border-foreground/40 hover:bg-muted/40`}
+                  >
+                    {rowContent}
+                  </Link>
+                ) : (
+                  <div key={chapter.id} className={rowClassName}>
+                    {rowContent}
+                  </div>
+                )
+              })}
           </div>
 
           <div className="mt-auto flex items-center justify-between pt-4 text-sm">
