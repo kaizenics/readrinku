@@ -215,7 +215,9 @@ export default async function MangaDetailsPage({
             <CardContent className="flex flex-col gap-3">
               <div className="rounded-lg border bg-background/60 p-3">
                 <dt className="text-muted-foreground">Last updated</dt>
-                <dd className="mt-1 font-medium">{formatDateLabel(manga.updatedAt)}</dd>
+                <dd className="mt-1 font-medium">
+                  {sourceInfo.chapters[0]?.releaseLabel ?? formatDateLabel(manga.updatedAt)}
+                </dd>
               </div>
               <div className="rounded-lg border bg-background/60 p-3">
                 <dt className="text-muted-foreground">Direction</dt>

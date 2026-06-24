@@ -1,4 +1,3 @@
-import Image from "next/image"
 import Link from "next/link"
 import { ArrowRightIcon, BookOpenTextIcon } from "@phosphor-icons/react/ssr"
 
@@ -7,7 +6,6 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card"
 import { RemoteCoverImage } from "@/components/manga/remote-cover-image"
 import {
   contentRatingLabels,
-  formatDateLabel,
   formatRelativeLabel,
   mangaStatusLabels,
 } from "@/lib/readrinku"
@@ -88,9 +86,11 @@ export function LiveMangaCard({ manga }: { manga: SourceMangaPreview }) {
                   {chapter.chapter ? `Ch. ${chapter.chapter}` : chapter.title}
                 </span>
                 <span className="shrink-0 text-muted-foreground">
-                  {chapter.releaseDate
-                    ? formatRelativeLabel(chapter.releaseDate)
-                    : formatDateLabel(manga.updatedAt)}
+                  {chapter.releaseLabel
+                    ? chapter.releaseLabel
+                    : chapter.releaseDate
+                      ? formatRelativeLabel(chapter.releaseDate)
+                      : null}
                 </span>
               </div>
             ))}

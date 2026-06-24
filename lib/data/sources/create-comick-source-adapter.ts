@@ -92,6 +92,12 @@ type ComickSourceAdapterOptions = {
     slug: string
     definition: SourceDefinition
   }) => ScrapedMangaDetails
+  parseChapters?: (input: {
+    html: string
+    slug: string
+    baseUrl: string
+    definition: SourceDefinition
+  }) => SourceChapterInfo[]
   extractChapterImageUrls?: (input: { html: string; baseUrl: string }) => string[]
   buildSearchPreviewsFromResults?: boolean
 }
@@ -500,6 +506,51 @@ function extractMangaDetailsFromHtml(
   }
 }
 
+// Catalog/search listings only expose the latest chapter, so synthesize the
+// most recent few (latest, latest-1, latest-2) for preview cards. These are
+// display-only teasers; the detail page always shows the real chapter list.
+export function buildRecentChapters({
+  slug,
+  latestLabel,
+  latestNumber,
+  sourceUrl,
+}: {
+  slug: string
+  latestLabel: string
+  latestNumber: number | null
+  sourceUrl: string
+}): SourceChapterInfo[] {
+  if (!latestLabel) {
+    return []
+  }
+
+  const makeChapter = (label: string): SourceChapterInfo => ({
+    id: `${slug}-recent-${label}`,
+    mangaId: slug,
+    title: `Chapter ${label}`,
+    chapter: label,
+    releaseDate: null,
+    pageCount: 0,
+    readable: false,
+    translatedLanguage: "en",
+    url: sourceUrl,
+  })
+
+  const chapters = [makeChapter(latestLabel)]
+
+  if (latestNumber !== null && Number.isFinite(latestNumber)) {
+    for (
+      let value = Math.floor(latestNumber) - 1;
+      value >= 1 && chapters.length < 3;
+      value -= 1
+    ) {
+      chapters.push(makeChapter(String(value)))
+    }
+  }
+
+  return chapters.slice(0, 3)
+}
+
 function buildSearchPreview(
   result: SourceSearchResult,
   definition: SourceDefinition
@@ -538,7 +589,12 @@ function buildSearchPreview(
     updatedAt: parseRelativeDate(result.lastUpdated) ?? new Date(0).toISOString(),
     chapterCount: hasLatest ? Math.max(1, Math.round(latestNumber)) : 0,
     lastChapterLabel: latestLabel ? `Ch. ${latestLabel}` : "Chapter unavailable",
-    recentChapters: [],
+    recentChapters: buildRecentChapters({
+      slug,
+      latestLabel,
+      latestNumber: hasLatest ? latestNumber : null,
+      sourceUrl: url,
+    }),
     sourceUrl: url,
   }
 }
@@ -698,6 +754,7 @@ export function createComickSourceAdapter(
     titleSuffixPattern,
     catalog,
     parseDetails,
+    parseChapters,
     extractChapterImageUrls,
     buildSearchPreviewsFromResults,
     buildMangaUrl = (slug, baseUrl) =>
@@ -730,19 +787,41 @@ export function createComickSourceAdapter(
         return null
       }
 
-      const [html, chapterResult] = await Promise.all([
+      // When the source can parse its chapter list straight from the detail
+      // HTML (which we fetch anyway), skip the chapters API — it is the more
+      // reliable, complete source and also carries release dates.
+      const [html, apiChapters] = await Promise.all([
         fetchHtml(url),
-        getSourceChaptersByUrl(url),
+        parseChapters ? Promise.resolve(null) : getSourceChaptersByUrl(url),
       ])
 
       if (!html) {
         return null
       }
 
+      let chapters: SourceChapterInfo[]
+      let totalChapters: number
+
+      if (parseChapters) {
+        chapters = sortChaptersDescending(
+          parseChapters({ html, slug, baseUrl: definition.baseUrl, definition })
+        )
+        totalChapters = chapters.length
+
+        if (!chapters.length) {
+          const fallback = await getSourceChaptersByUrl(url)
+          chapters = fallback.chapters
+          totalChapters = fallback.totalChapters
+        }
+      } else {
+        chapters = apiChapters?.chapters ?? []
+        totalChapters = apiChapters?.totalChapters ?? chapters.length
+      }
+
       const details = parseDetails
         ? parseDetails({ html, slug, definition })
         : extractMangaDetailsFromHtml(html, slug, definition, titleSuffixPattern)
-      const latestChapterDate = chapterResult.chapters.find(
+      const latestChapterDate = chapters.find(
         (chapter) => chapter.releaseDate
       )?.releaseDate
 
@@ -760,8 +839,8 @@ export function createComickSourceAdapter(
         readingDirection: "ltr",
         updatedAt:
           latestChapterDate ?? details.updatedAt ?? new Date(0).toISOString(),
-        chapterCount: chapterResult.totalChapters,
-        chapters: chapterResult.chapters,
+        chapterCount: totalChapters,
+        chapters,
         url,
         sourceId: definition.id,
         sourceName: definition.name,

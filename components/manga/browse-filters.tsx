@@ -51,9 +51,18 @@ export function BrowseFilters({
   }
 
   useEffect(() => {
+    const currentQuery = searchParams.get("q") ?? ""
+
+    // Only reset to page 1 when the search query actually changes. Without this
+    // guard the effect also fires on mount / pagination and wipes ?page, which
+    // snaps the user back to page 1.
+    if (deferredQuery === currentQuery) {
+      return
+    }
+
     updateParams({ q: deferredQuery, page: "" })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deferredQuery])
+  }, [deferredQuery, searchParams])
 
   const hasActiveFilters =
     Boolean(initial.q) ||

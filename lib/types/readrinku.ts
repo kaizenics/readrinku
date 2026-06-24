@@ -59,6 +59,8 @@ export interface SourceChapterInfo {
   title: string
   chapter: string | null
   releaseDate: string | null
+  /** Source's own human label (e.g. "2 years ago") when only a relative date is available. */
+  releaseLabel?: string | null
   pageCount: number
   readable: boolean
   translatedLanguage: string

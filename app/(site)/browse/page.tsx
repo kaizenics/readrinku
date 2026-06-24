@@ -164,11 +164,7 @@ export default async function BrowsePage({
         >
           <BrowseFilters initial={initial} />
         </Suspense>
-        <LiveMangaShelf
-          title={`${result.total} result${result.total === 1 ? "" : "s"}`}
-          description="These manga results are fetched server-side and updated from the current live source catalog."
-          manga={result.items}
-        />
+        <LiveMangaShelf manga={result.items} />
         {result.total > BROWSE_PAGE_SIZE ? (
           <div className="flex flex-col gap-4">
             <p className="text-sm text-muted-foreground">

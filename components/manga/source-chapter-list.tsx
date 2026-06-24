@@ -67,15 +67,17 @@ export function SourceChapterList({
                       <div className="flex shrink-0 flex-col items-end gap-1 text-right">
                         <span className="inline-flex items-center gap-2 text-muted-foreground">
                           <CalendarBlankIcon />
-                          {chapter.releaseDate
-                            ? formatDateLabel(chapter.releaseDate)
-                            : "Release date unavailable"}
+                          {chapter.releaseLabel
+                            ? chapter.releaseLabel
+                            : chapter.releaseDate
+                              ? formatDateLabel(chapter.releaseDate)
+                              : "Release date unavailable"}
                         </span>
-                        <span className="text-muted-foreground">
-                          {chapter.pageCount > 0
-                            ? `${chapter.pageCount} pages`
-                            : "Page count loads in reader"}
-                        </span>
+                        {chapter.pageCount > 0 ? (
+                          <span className="text-muted-foreground">
+                            {chapter.pageCount} pages
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                   </Link>

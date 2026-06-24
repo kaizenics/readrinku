@@ -1,6 +1,7 @@
 import "server-only"
 
 import {
+  buildRecentChapters,
   createComickSourceAdapter,
   extractSlugFromUrl,
   htmlDecode,
@@ -21,6 +22,7 @@ import {
 } from "@/lib/data/sources/source-config"
 import type {
   ContentRating,
+  SourceChapterInfo,
   SourceMangaPreview,
 } from "@/lib/types/readrinku"
 
@@ -82,6 +84,7 @@ function parseLatestChapter(text: string) {
 
   return {
     label,
+    number: hasValue ? value : null,
     chapterCount: hasValue ? Math.max(1, Math.round(value)) : 0,
     lastChapterLabel: label ? `Ch. ${label}` : "Chapter unavailable",
   }
@@ -156,7 +159,12 @@ function parseCatalogCard(
     updatedAt: "",
     chapterCount: latest.chapterCount,
     lastChapterLabel: latest.lastChapterLabel,
-    recentChapters: [],
+    recentChapters: buildRecentChapters({
+      slug,
+      latestLabel: latest.label,
+      latestNumber: latest.number,
+      sourceUrl,
+    }),
     sourceUrl,
   }
 }
@@ -308,6 +316,70 @@ function parseKaliscanDetails({
   }
 }
 
+// KaliScan server-renders the COMPLETE chapter list (with release dates) inside
+// `<ul id="chapter-list">`, so we parse it from the detail HTML we already
+// fetched instead of the chapters API, which is flaky and date-less.
+function parseKaliscanChapters({
+  html,
+  slug,
+  baseUrl,
+}: {
+  html: string
+  slug: string
+  baseUrl: string
+}): SourceChapterInfo[] {
+  const listMatch = html.match(
+    /<ul[^>]*id=["']chapter-list["'][^>]*>([\s\S]*?)<\/ul>/i
+  )
+
+  if (!listMatch) {
+    return []
+  }
+
+  const seen = new Set<string>()
+  const chapters: SourceChapterInfo[] = []
+
+  for (const anchor of listMatch[1].matchAll(
+    /<a[^>]+href=["']([^"']*?\/chapter-[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi
+  )) {
+    const url = normalizeUrl(htmlDecode(anchor[1]), baseUrl)
+    const idMatch = url?.match(/\/chapter-([^/?#]+)/i)
+    const id = idMatch ? decodeURIComponent(idMatch[1]) : null
+
+    if (!url || !id || seen.has(id)) {
+      continue
+    }
+
+    seen.add(id)
+
+    const titleMatch = anchor[2].match(
+      /class=["'][^"']*chapter-title[^"']*["'][^>]*>([\s\S]*?)<\//i
+    )
+    const title = titleMatch ? stripHtml(titleMatch[1]) : ""
+    const dateMatch = anchor[2].match(
+      /class=["'][^"']*chapter-update[^"']*["'][^>]*>([\s\S]*?)<\/time>/i
+    )
+    // KaliScan only exposes relative dates ("2 years ago"); keep that exact
+    // label for display and derive an ISO date only for sorting/metadata.
+    const releaseLabel = dateMatch ? stripHtml(dateMatch[1]) : ""
+
+    chapters.push({
+      id,
+      mangaId: slug,
+      title: title || `Chapter ${id}`,
+      chapter: id,
+      releaseDate: releaseLabel ? parseRelativeDate(releaseLabel) : null,
+      releaseLabel: releaseLabel || null,
+      pageCount: 0,
+      readable: true,
+      translatedLanguage: "en",
+      url,
+    })
+  }
+
+  return chapters
+}
+
 // Chapter pages live in a `var chapImages = "url1,url2,..."` string of signed,
 // order-sensitive CDN URLs (rotating `s*.1stmggv7.xyz` hosts), not <img> tags.
 function extractKaliscanChapterImages({ html }: { html: string }) {
@@ -328,6 +400,7 @@ export const kaliscanSource = createComickSourceAdapter({
   buildMangaUrl: (slug, baseUrl) => new URL(`/manga/${slug}`, baseUrl).toString(),
   catalog,
   parseDetails: parseKaliscanDetails,
+  parseChapters: parseKaliscanChapters,
   extractChapterImageUrls: extractKaliscanChapterImages,
   buildSearchPreviewsFromResults: true,
 })
