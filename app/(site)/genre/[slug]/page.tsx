@@ -3,6 +3,7 @@ import { Fragment } from "react"
 import { notFound } from "next/navigation"
 
 import { JsonLd } from "@/components/seo/json-ld"
+import { AgeGate } from "@/components/manga/age-gate"
 import { LiveMangaShelf } from "@/components/manga/live-manga-shelf"
 import {
   Pagination,
@@ -116,6 +117,60 @@ export default async function GenrePage({
     },
   ]
 
+  const listing = (
+    <>
+      <LiveMangaShelf manga={result.items} />
+
+      {result.total > GENRE_PAGE_SIZE ? (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-muted-foreground">
+            Showing {startResult}-{endResult} of {result.total} titles.
+          </p>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href={buildGenreHref(genre.slug, Math.max(1, normalizedPage - 1))}
+                  aria-disabled={normalizedPage <= 1}
+                  className={normalizedPage <= 1 ? "pointer-events-none opacity-50" : undefined}
+                />
+              </PaginationItem>
+              {visiblePages.map((page, index) => {
+                const previousPage = visiblePages[index - 1]
+                const needsEllipsis = previousPage && page - previousPage > 1
+
+                return (
+                  <Fragment key={page}>
+                    {needsEllipsis ? (
+                      <PaginationItem>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    ) : null}
+                    <PaginationItem>
+                      <PaginationLink
+                        href={buildGenreHref(genre.slug, page)}
+                        isActive={page === normalizedPage}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  </Fragment>
+                )
+              })}
+              <PaginationItem>
+                <PaginationNext
+                  href={buildGenreHref(genre.slug, Math.min(totalPages, normalizedPage + 1))}
+                  aria-disabled={normalizedPage >= totalPages}
+                  className={normalizedPage >= totalPages ? "pointer-events-none opacity-50" : undefined}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      ) : null}
+    </>
+  )
+
   return (
     <>
       <JsonLd data={pageSchema} />
@@ -133,55 +188,11 @@ export default async function GenrePage({
           </p>
         </div>
 
-        <LiveMangaShelf manga={result.items} />
-
-        {result.total > GENRE_PAGE_SIZE ? (
-          <div className="flex flex-col gap-4">
-            <p className="text-sm text-muted-foreground">
-              Showing {startResult}-{endResult} of {result.total} titles.
-            </p>
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    href={buildGenreHref(genre.slug, Math.max(1, normalizedPage - 1))}
-                    aria-disabled={normalizedPage <= 1}
-                    className={normalizedPage <= 1 ? "pointer-events-none opacity-50" : undefined}
-                  />
-                </PaginationItem>
-                {visiblePages.map((page, index) => {
-                  const previousPage = visiblePages[index - 1]
-                  const needsEllipsis = previousPage && page - previousPage > 1
-
-                  return (
-                    <Fragment key={page}>
-                      {needsEllipsis ? (
-                        <PaginationItem>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      ) : null}
-                      <PaginationItem>
-                        <PaginationLink
-                          href={buildGenreHref(genre.slug, page)}
-                          isActive={page === normalizedPage}
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    </Fragment>
-                  )
-                })}
-                <PaginationItem>
-                  <PaginationNext
-                    href={buildGenreHref(genre.slug, Math.min(totalPages, normalizedPage + 1))}
-                    aria-disabled={normalizedPage >= totalPages}
-                    className={normalizedPage >= totalPages ? "pointer-events-none opacity-50" : undefined}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        ) : null}
+        {genre.adult ? (
+          <AgeGate genreLabel={genre.label}>{listing}</AgeGate>
+        ) : (
+          listing
+        )}
       </div>
     </>
   )

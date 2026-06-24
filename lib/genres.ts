@@ -4,10 +4,13 @@
 export interface MangaGenre {
   label: string
   slug: string
+  /** Requires an 18+ confirmation before the listing is shown. */
+  adult?: boolean
 }
 
 export const mangaGenres: readonly MangaGenre[] = [
   { label: "Action", slug: "action" },
+  { label: "Adult", slug: "adult", adult: true },
   { label: "Adventure", slug: "adventure" },
   { label: "Boys Love", slug: "yaoi" },
   { label: "Comedy", slug: "comedy" },
@@ -26,7 +29,7 @@ export const mangaGenres: readonly MangaGenre[] = [
   { label: "Josei", slug: "josei" },
   { label: "Magic", slug: "magic" },
   { label: "Martial Arts", slug: "martial-arts" },
-  { label: "Mature", slug: "mature" },
+  { label: "Mature", slug: "mature", adult: true },
   { label: "Mecha", slug: "mecha" },
   { label: "Medical", slug: "medical" },
   { label: "Military", slug: "military" },
