@@ -222,27 +222,58 @@ async function mergeChaptersAcrossSources(
 
 export type { SourceBrowseFilters, SourceBrowseResult }
 
+// Adult/mature content is kept off the homepage shelves (it is still reachable
+// via Browse, search, and the Adult/Mature genre pages behind the age gate).
+const ADULT_GENRE_HINTS = [
+  "adult",
+  "mature",
+  "smut",
+  "hentai",
+  "ecchi",
+  "18+",
+  "pornographic",
+  "erotica",
+]
+
+function isAdultPreview(preview: SourceMangaPreview) {
+  if (preview.contentRating === "mature") {
+    return true
+  }
+
+  return preview.genres.some((genre) => {
+    const value = genre.toLowerCase()
+    return ADULT_GENRE_HINTS.some((hint) => value.includes(hint))
+  })
+}
+
 export const getSourceHomepageManga = cache(
   async (limit = 18, sourceId: string = ALL_SOURCE_ID) => {
     if (isAllSources(sourceId)) {
       const results = await Promise.all(
         getAllSourceAdapters().map(async (adapter) => {
-          const items = await adapter.getHomepageManga(limit)
+          // Over-fetch from the catalog source so the shelves still fill after
+          // adult titles are dropped.
+          const fetchCount = adapter.catalog ? Math.max(limit * 3, 30) : limit
+          const items = await adapter.getHomepageManga(fetchCount)
 
           return items.map((item) => normalizeMangaPreview(item, adapter.definition.id))
         })
       )
 
-      return sortSourceMangaPreviews(
-        dedupePreviewsByTitle(results.flat()),
-        "updated"
-      ).slice(0, limit)
+      const safe = dedupePreviewsByTitle(results.flat()).filter(
+        (preview) => !isAdultPreview(preview)
+      )
+
+      return sortSourceMangaPreviews(safe, "updated").slice(0, limit)
     }
 
     const adapter = getAdapter(sourceId)
-    const items = await adapter.getHomepageManga(limit)
+    const items = await adapter.getHomepageManga(limit * 3)
 
-    return items.map((item) => normalizeMangaPreview(item, adapter.definition.id))
+    return items
+      .map((item) => normalizeMangaPreview(item, adapter.definition.id))
+      .filter((preview) => !isAdultPreview(preview))
+      .slice(0, limit)
   }
 )
 
