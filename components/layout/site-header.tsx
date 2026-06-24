@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { BookOpenIcon, DoorOpenIcon, HouseIcon, MagnifyingGlassIcon, StackIcon, UserCircleIcon } from "@phosphor-icons/react"
 import { usePathname } from "next/navigation"
@@ -31,18 +32,15 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b bg-background">
       <div className="page-frame flex min-h-16 items-center justify-between gap-4 py-2">
         <div className="flex min-w-0 flex-1 items-center gap-6">
-          <Link href="/" className="flex items-center gap-3">
-            <span className="flex size-9 items-center justify-center rounded-md border bg-muted">
-              <BookOpenIcon />
-            </span>
-            <span className="flex flex-col">
-              <span className="font-heading text-sm font-semibold tracking-tight">
-                ReadRinku
-              </span>
-              <span className="text-xs text-muted-foreground">
-                Quiet manga reading
-              </span>
-            </span>
+          <Link href="/" className="flex items-center" aria-label="ReadRinku home">
+            <Image
+              src="/readrinku.png"
+              alt="ReadRinku"
+              width={485}
+              height={187}
+              priority
+              className="h-9 w-auto brightness-0 invert"
+            />
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">
