@@ -338,13 +338,13 @@ export function MangaReader({
         {preferences.mode === "vertical" ? (
           <div
             ref={verticalContainerRef}
-            className={cn("mx-auto flex w-full flex-col gap-4", getReaderWidthClass(preferences.width))}
+            className={cn("mx-auto flex w-full flex-col", getReaderWidthClass(preferences.width))}
           >
             {pages.map((page) => (
               <article
                 key={page.pageNumber}
                 data-page-number={page.pageNumber}
-                className="overflow-hidden rounded-lg border bg-card shadow-sm"
+                className="overflow-hidden bg-card"
               >
                 <Image
                   src={page.src}
