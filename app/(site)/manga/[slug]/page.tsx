@@ -5,7 +5,6 @@ import {
   BookOpenIcon,
   CalendarBlankIcon,
   StarIcon,
-  TextAlignRightIcon,
 } from "@phosphor-icons/react/ssr"
 
 import { JsonLd } from "@/components/seo/json-ld"
@@ -254,21 +253,10 @@ export default async function MangaDetailsPage({
                 </div>
               ) : null}
               <div className="rounded-lg border bg-background/60 p-3">
-                <dt className="text-muted-foreground">Direction</dt>
-                <dd className="mt-1 flex items-center gap-2 font-medium">
-                  <TextAlignRightIcon />
-                  {manga.readingDirection === "rtl" ? "Right to left" : "Left to right"}
-                </dd>
-              </div>
-              <div className="rounded-lg border bg-background/60 p-3">
                 <dt className="text-muted-foreground">Chapters</dt>
                 <dd className="mt-1 font-medium">
                   {sourceInfo.chapters.length} available entries
                 </dd>
-              </div>
-              <div className="rounded-lg border bg-background/60 p-3">
-                <dt className="text-muted-foreground">Source</dt>
-                <dd className="mt-1 font-medium">Live chapter feed</dd>
               </div>
               {manga.malUrl ? (
                 <a

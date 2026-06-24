@@ -1,5 +1,5 @@
+import Image from "next/image"
 import Link from "next/link"
-import { BookOpenIcon } from "@phosphor-icons/react/ssr"
 
 import { siteNavigation } from "@/lib/readrinku"
 
@@ -17,19 +17,15 @@ export function SiteFooter() {
       <div className="page-frame flex flex-col gap-8 py-10">
         <div className="grid gap-8 md:grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)_minmax(0,0.9fr)]">
           <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <span className="flex size-10 items-center justify-center rounded-md border bg-background">
-                <BookOpenIcon />
-              </span>
-              <div className="flex flex-col">
-                <span className="font-heading text-base font-semibold tracking-tight">
-                  ReadRinku
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  Clean manga reading, built for long sessions.
-                </span>
-              </div>
-            </div>
+            <Link href="/" aria-label="ReadRinku home" className="flex w-fit items-center">
+              <Image
+                src="/readrinku.png"
+                alt="ReadRinku"
+                width={485}
+                height={187}
+                className="h-9 w-auto brightness-0 invert"
+              />
+            </Link>
             <p className="max-w-xl text-sm leading-7 text-muted-foreground">
               ReadRinku is a frontend manga reader prototype focused on discovery,
               chapter browsing, and a calmer reading flow across desktop and mobile.
