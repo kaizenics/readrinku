@@ -16,6 +16,27 @@ export interface SourceDefinition {
 
 export const sourceDefinitions: readonly SourceDefinition[] = [
   {
+    id: "kaliscan",
+    name: "KaliScan",
+    label: "Live catalog",
+    baseUrl: "https://kaliscan.com",
+    imageRemotePatterns: [
+      {
+        protocol: "https",
+        hostname: "cdn.1stmangago.com",
+        pathname: "/**",
+      },
+      // Chapter pages are served from rotating, signed proxy hosts
+      // (e.g. s1/s4.1stmggv7.xyz). Omitting `search` allows the signed
+      // `?acc=...&expires=...` query string the optimizer needs.
+      {
+        protocol: "https",
+        hostname: "**.1stmggv7.xyz",
+        pathname: "/**",
+      },
+    ],
+  },
+  {
     id: "arya-scans",
     name: "Arya Scans",
     label: "Live catalog",
@@ -30,24 +51,6 @@ export const sourceDefinitions: readonly SourceDefinition[] = [
         protocol: "https",
         hostname: "cdn.discordapp.com",
         pathname: "/attachments/**",
-      },
-    ],
-  },
-  {
-    id: "demonicscans",
-    name: "DemonicScans",
-    label: "DemonicScans",
-    baseUrl: "https://demonicscans.org",
-    imageRemotePatterns: [
-      {
-        protocol: "https",
-        hostname: "readermc.org",
-        pathname: "/images/**",
-      },
-      {
-        protocol: "https",
-        hostname: "cdn.demoniclibs.com",
-        pathname: "/**",
       },
     ],
   },

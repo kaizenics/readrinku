@@ -17,10 +17,15 @@ export interface SourceBrowseResult {
   total: number
 }
 
+export interface SourceCatalogCapability {
+  pageSize: number
+}
+
 export interface SourceAdapter {
   definition: SourceDefinition
   getHomepageManga(limit?: number): Promise<SourceMangaPreview[]>
   browse(filters?: SourceBrowseFilters): Promise<SourceBrowseResult>
   getMangaInfoBySlug(slug: string): Promise<SourceMangaInfo | null>
   getChapterPages(chapterUrl: string): Promise<MangaPage[]>
+  catalog?: SourceCatalogCapability
 }

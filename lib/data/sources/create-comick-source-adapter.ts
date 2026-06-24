@@ -54,7 +54,7 @@ type SourceChaptersResponse = {
   totalChapters?: number
 }
 
-type ScrapedMangaDetails = {
+export type ScrapedMangaDetails = {
   title: string
   synopsis: string
   coverImage: string | null
@@ -62,13 +62,38 @@ type ScrapedMangaDetails = {
   artists: string[]
   genres: string[]
   status: MangaStatus
+  altTitles?: string[]
+  updatedAt?: string | null
+}
+
+export type SourceCatalogPage = {
+  previews: SourceMangaPreview[]
+  totalPages: number
+}
+
+export type SourceCatalog = {
+  pageSize: number
+  buildPageUrl: (input: { baseUrl: string; page: number; sort?: string }) => string
+  parsePage: (input: {
+    html: string
+    baseUrl: string
+    definition: SourceDefinition
+  }) => SourceCatalogPage
 }
 
 type ComickSourceAdapterOptions = {
   definition: SourceDefinition
-  chapterImagePatterns: RegExp[]
+  chapterImagePatterns?: RegExp[]
   titleSuffixPattern?: RegExp
   buildMangaUrl?: (slug: string, baseUrl: string) => string
+  catalog?: SourceCatalog
+  parseDetails?: (input: {
+    html: string
+    slug: string
+    definition: SourceDefinition
+  }) => ScrapedMangaDetails
+  extractChapterImageUrls?: (input: { html: string; baseUrl: string }) => string[]
+  buildSearchPreviewsFromResults?: boolean
 }
 
 function clampPage(value: number | undefined) {
@@ -88,7 +113,7 @@ function paginateItems<T>(items: T[], limit: number | undefined, page: number) {
   return items.slice(start, start + limit)
 }
 
-function htmlDecode(value: string) {
+export function htmlDecode(value: string) {
   return value
     .replace(/&#x([0-9a-f]+);/gi, (_, code) =>
       String.fromCharCode(Number.parseInt(code, 16))
@@ -107,11 +132,11 @@ function htmlDecode(value: string) {
     .replace(/&nbsp;/g, " ")
 }
 
-function stripHtml(value: string) {
+export function stripHtml(value: string) {
   return htmlDecode(value).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
 }
 
-function toTitleCase(value: string) {
+export function toTitleCase(value: string) {
   return value
     .split("-")
     .filter(Boolean)
@@ -119,7 +144,7 @@ function toTitleCase(value: string) {
     .join(" ")
 }
 
-function toSynopsis(value: string) {
+export function toSynopsis(value: string) {
   const text = stripHtml(value)
 
   if (!text) {
@@ -127,6 +152,46 @@ function toSynopsis(value: string) {
   }
 
   return text
+}
+
+const RELATIVE_DATE_UNIT_SECONDS: Record<string, number> = {
+  second: 1,
+  minute: 60,
+  hour: 3600,
+  day: 86400,
+  week: 604800,
+  month: 2629800,
+  year: 31557600,
+}
+
+export function parseRelativeDate(value: string | null | undefined) {
+  const normalized = value?.trim().toLowerCase() ?? ""
+
+  if (!normalized) {
+    return null
+  }
+
+  if (normalized.includes("just now") || normalized === "now") {
+    return new Date().toISOString()
+  }
+
+  const match = normalized.match(
+    /(\d+)\s*(second|minute|hour|day|week|month|year)s?/
+  )
+
+  if (!match) {
+    const parsed = Date.parse(normalized)
+    return Number.isNaN(parsed) ? null : new Date(parsed).toISOString()
+  }
+
+  const amount = Number.parseInt(match[1], 10)
+  const unitSeconds = RELATIVE_DATE_UNIT_SECONDS[match[2]] ?? 0
+
+  if (!Number.isFinite(amount) || unitSeconds === 0) {
+    return null
+  }
+
+  return new Date(Date.now() - amount * unitSeconds * 1000).toISOString()
 }
 
 function parseIsoDate(value: string | null | undefined) {
@@ -143,7 +208,7 @@ function parseIsoDate(value: string | null | undefined) {
   return null
 }
 
-function mapStatus(value: string | undefined): MangaStatus {
+export function mapStatus(value: string | undefined): MangaStatus {
   const normalized = value?.trim().toLowerCase() ?? ""
 
   if (normalized.includes("complete")) {
@@ -184,7 +249,7 @@ function extractBetween(html: string, pattern: RegExp) {
   return match?.[1] ? stripHtml(match[1]) : ""
 }
 
-function normalizeUrl(value: string, baseUrl: string) {
+export function normalizeUrl(value: string, baseUrl: string) {
   try {
     return new URL(value, baseUrl).toString()
   } catch {
@@ -192,7 +257,7 @@ function normalizeUrl(value: string, baseUrl: string) {
   }
 }
 
-function normalizeSourceImageUrl(value: string | null) {
+export function normalizeSourceImageUrl(value: string | null) {
   if (!value) {
     return null
   }
@@ -226,7 +291,7 @@ function normalizeSourceImageUrl(value: string | null) {
   }
 }
 
-function extractSlugFromUrl(url: string) {
+export function extractSlugFromUrl(url: string) {
   try {
     const { pathname } = new URL(url)
     const segments = pathname.split("/").filter(Boolean)
@@ -290,14 +355,6 @@ function extractLinkedValues(sectionHtml: string) {
   const textValue = stripHtml(sectionHtml)
 
   return textValue ? [textValue] : []
-}
-
-function extractMangaUrlsFromHtml(html: string, baseUrl: string) {
-  return extractMangaUrlsFromHtmlWithBuilder(
-    html,
-    baseUrl,
-    (slug, nextBaseUrl) => new URL(`/manga/${slug}/`, nextBaseUrl).toString()
-  )
 }
 
 function extractMangaUrlsFromHtmlWithBuilder(
@@ -439,6 +496,50 @@ function extractMangaDetailsFromHtml(
     artists,
     genres: genres.length ? genres : [definition.label],
     status: mapStatus(statusText),
+    altTitles: [],
+  }
+}
+
+function buildSearchPreview(
+  result: SourceSearchResult,
+  definition: SourceDefinition
+): SourceMangaPreview | null {
+  const url = result.url?.trim()
+
+  if (!url) {
+    return null
+  }
+
+  const slug = extractSlugFromUrl(url)
+
+  if (!slug) {
+    return null
+  }
+
+  const latestNumber =
+    typeof result.latestChapter === "number"
+      ? result.latestChapter
+      : Number.parseFloat(String(result.latestChapter ?? ""))
+  const hasLatest = Number.isFinite(latestNumber) && latestNumber > 0
+  const latestLabel = hasLatest ? String(result.latestChapter).trim() : ""
+
+  return {
+    id: slug,
+    title: result.title?.trim() || toTitleCase(slug.replace(/^\d+-/, "")),
+    altTitles: [],
+    synopsis: "Synopsis unavailable from the selected source.",
+    image: normalizeSourceImageUrl(result.coverImage ?? null),
+    authors: [],
+    artists: [],
+    genres: [definition.label],
+    status: "ongoing",
+    contentRating: "everyone",
+    readingDirection: "ltr",
+    updatedAt: parseRelativeDate(result.lastUpdated) ?? new Date(0).toISOString(),
+    chapterCount: hasLatest ? Math.max(1, Math.round(latestNumber)) : 0,
+    lastChapterLabel: latestLabel ? `Ch. ${latestLabel}` : "Chapter unavailable",
+    recentChapters: [],
+    sourceUrl: url,
   }
 }
 
@@ -588,12 +689,21 @@ function toPreview(info: SourceMangaInfo, definition: SourceDefinition): SourceM
   }
 }
 
-export function createComickSourceAdapter({
-  definition,
-  chapterImagePatterns,
-  titleSuffixPattern,
-  buildMangaUrl = (slug, baseUrl) => new URL(`/manga/${slug}/`, baseUrl).toString(),
-}: ComickSourceAdapterOptions): SourceAdapter {
+export function createComickSourceAdapter(
+  options: ComickSourceAdapterOptions
+): SourceAdapter {
+  const {
+    definition,
+    chapterImagePatterns,
+    titleSuffixPattern,
+    catalog,
+    parseDetails,
+    extractChapterImageUrls,
+    buildSearchPreviewsFromResults,
+    buildMangaUrl = (slug, baseUrl) =>
+      new URL(`/manga/${slug}/`, baseUrl).toString(),
+  } = options
+
   async function getSourceChaptersByUrl(url: string) {
     const response = await postJson<SourceChaptersResponse>("/api/chapters", {
       url,
@@ -629,12 +739,9 @@ export function createComickSourceAdapter({
         return null
       }
 
-      const details = extractMangaDetailsFromHtml(
-        html,
-        slug,
-        definition,
-        titleSuffixPattern
-      )
+      const details = parseDetails
+        ? parseDetails({ html, slug, definition })
+        : extractMangaDetailsFromHtml(html, slug, definition, titleSuffixPattern)
       const latestChapterDate = chapterResult.chapters.find(
         (chapter) => chapter.releaseDate
       )?.releaseDate
@@ -642,7 +749,7 @@ export function createComickSourceAdapter({
       return {
         id: slug,
         title: details.title,
-        altTitles: [],
+        altTitles: details.altTitles ?? [],
         genres: details.genres,
         image: details.coverImage,
         synopsis: details.synopsis,
@@ -651,7 +758,8 @@ export function createComickSourceAdapter({
         status: details.status,
         contentRating: "everyone",
         readingDirection: "ltr",
-        updatedAt: latestChapterDate ?? new Date(0).toISOString(),
+        updatedAt:
+          latestChapterDate ?? details.updatedAt ?? new Date(0).toISOString(),
         chapterCount: chapterResult.totalChapters,
         chapters: chapterResult.chapters,
         url,
@@ -661,7 +769,106 @@ export function createComickSourceAdapter({
     }
   )
 
+  function assignCatalogDates(
+    previews: SourceMangaPreview[],
+    catalogPage: number,
+    pageSize: number
+  ) {
+    const base = Date.now()
+
+    return previews.map((preview, index) => {
+      if (preview.updatedAt) {
+        return preview
+      }
+
+      const globalIndex = (catalogPage - 1) * pageSize + index
+
+      return {
+        ...preview,
+        updatedAt: new Date(base - globalIndex * 60_000).toISOString(),
+      }
+    })
+  }
+
+  const fetchCatalogPage = cache(async (catalogPage: number, sort?: string) => {
+    if (!catalog) {
+      return { previews: [] as SourceMangaPreview[], totalPages: catalogPage }
+    }
+
+    const url = catalog.buildPageUrl({
+      baseUrl: definition.baseUrl,
+      page: catalogPage,
+      sort,
+    })
+    const html = await fetchHtml(url)
+
+    if (!html) {
+      return { previews: [] as SourceMangaPreview[], totalPages: catalogPage }
+    }
+
+    const result = catalog.parsePage({
+      html,
+      baseUrl: definition.baseUrl,
+      definition,
+    })
+
+    return {
+      previews: assignCatalogDates(result.previews, catalogPage, catalog.pageSize),
+      totalPages: Math.max(result.totalPages, catalogPage),
+    }
+  })
+
+  async function browseCatalog(
+    filters: SourceBrowseFilters
+  ): Promise<SourceBrowseResult> {
+    if (!catalog) {
+      return { items: [], total: 0 }
+    }
+
+    const { pageSize } = catalog
+    const limit = filters.limit && filters.limit > 0 ? filters.limit : pageSize
+    const page = clampPage(filters.page)
+    const start = (page - 1) * limit
+    const end = start + limit
+    const firstCatalogPage = Math.floor(start / pageSize) + 1
+    const lastCatalogPage = Math.max(
+      firstCatalogPage,
+      Math.floor((end - 1) / pageSize) + 1
+    )
+
+    const catalogPageNumbers: number[] = []
+    for (let current = firstCatalogPage; current <= lastCatalogPage; current += 1) {
+      catalogPageNumbers.push(current)
+    }
+
+    const pages = await Promise.all(
+      catalogPageNumbers.map((current) => fetchCatalogPage(current, filters.sort))
+    )
+    const totalPages = pages[0]?.totalPages ?? firstCatalogPage
+    const offset = (firstCatalogPage - 1) * pageSize
+    const flat = pages.flatMap((result) => result.previews)
+    const items = flat.slice(start - offset, start - offset + limit)
+
+    return {
+      items,
+      total: Math.max(totalPages * pageSize, offset + flat.length),
+    }
+  }
+
   const getHomepageManga = cache(async (limit?: number) => {
+    if (catalog) {
+      const result = await browseCatalog({
+        sort: "updated",
+        page: 1,
+        limit:
+          typeof limit === "number" && Number.isFinite(limit)
+            ? limit
+            : catalog.pageSize,
+      })
+
+      return result.items
+    }
+
     const html = await fetchHtml(definition.baseUrl)
 
     if (!html) {
@@ -684,26 +891,34 @@ export function createComickSourceAdapter({
       .map((item) => toPreview(item, definition))
   })
 
-  async function browse(
-    filters: SourceBrowseFilters = {}
+  async function browseSearch(
+    filters: SourceBrowseFilters
   ): Promise<SourceBrowseResult> {
-    const limit = filters.limit
-    const page = clampPage(filters.page)
-
-    if (!filters.q?.trim()) {
-      const homepageItems = await getHomepageManga()
-      const sortedItems = sortSourceMangaPreviews(homepageItems, filters.sort)
-
-      return {
-        items: paginateItems(sortedItems, limit, page),
-        total: sortedItems.length,
-      }
-    }
-
     const response = await postJson<SourceSearchResponse>("/api/search", {
-      query: filters.q.trim(),
+      query: (filters.q ?? "").trim(),
       source: definition.id,
     })
+
+    if (buildSearchPreviewsFromResults) {
+      const seen = new Set<string>()
+      const previews: SourceMangaPreview[] = []
+
+      for (const result of response?.results ?? []) {
+        const preview = buildSearchPreview(result, definition)
+
+        if (preview && !seen.has(preview.id)) {
+          seen.add(preview.id)
+          previews.push(preview)
+        }
+      }
+
+      const sorted = sortSourceMangaPreviews(previews, filters.sort)
+
+      return {
+        items: paginateItems(sorted, filters.limit, clampPage(filters.page)),
+        total: sorted.length,
+      }
+    }
 
     const urls = [
       ...new Set(
@@ -712,7 +927,7 @@ export function createComickSourceAdapter({
           .filter((value): value is string => Boolean(value)) ?? []
       ),
     ]
-    const pagedUrls = paginateItems(urls, limit, page)
+    const pagedUrls = paginateItems(urls, filters.limit, clampPage(filters.page))
 
     const items = await Promise.all(pagedUrls.map((url) => getSourceMangaInfoByUrl(url)))
     const previews = items
@@ -722,6 +937,26 @@ export function createComickSourceAdapter({
     return {
       items: sortSourceMangaPreviews(previews, filters.sort),
       total: response?.results?.length ?? urls.length,
+    }
+  }
+
+  async function browse(
+    filters: SourceBrowseFilters = {}
+  ): Promise<SourceBrowseResult> {
+    if (filters.q?.trim()) {
+      return browseSearch(filters)
+    }
+
+    if (catalog) {
+      return browseCatalog(filters)
+    }
+
+    const homepageItems = await getHomepageManga()
+    const sortedItems = sortSourceMangaPreviews(homepageItems, filters.sort)
+
+    return {
+      items: paginateItems(sortedItems, filters.limit, clampPage(filters.page)),
+      total: sortedItems.length,
     }
   }
 
@@ -736,11 +971,15 @@ export function createComickSourceAdapter({
       return []
     }
 
-    return extractImageUrlsFromChapterHtml(
-      html,
-      definition.baseUrl,
-      chapterImagePatterns
-    ).map((src, index) => ({
+    const urls = extractChapterImageUrls
+      ? extractChapterImageUrls({ html, baseUrl: definition.baseUrl })
+      : extractImageUrlsFromChapterHtml(
+          html,
+          definition.baseUrl,
+          chapterImagePatterns ?? []
+        )
+
+    return urls.map((src, index) => ({
       src,
       width: DEFAULT_PAGE_WIDTH,
       height: DEFAULT_PAGE_HEIGHT,
@@ -755,5 +994,6 @@ export function createComickSourceAdapter({
     browse,
     getMangaInfoBySlug: cache(getMangaInfoBySlug),
     getChapterPages,
+    catalog: catalog ? { pageSize: catalog.pageSize } : undefined,
   }
 }

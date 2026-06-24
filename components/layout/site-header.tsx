@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { BookOpenIcon, DoorOpenIcon, HouseIcon, MagnifyingGlassIcon, StackIcon, UserCircleIcon } from "@phosphor-icons/react"
 import { usePathname } from "next/navigation"
+import { Suspense } from "react"
 import { toast } from "sonner"
 
 import { HeaderSearch } from "@/components/layout/header-search"
@@ -60,7 +61,9 @@ export function SiteHeader() {
           </nav>
 
           <div className="hidden min-w-0 lg:block lg:w-[min(34vw,28rem)]">
-            <HeaderSearch />
+            <Suspense fallback={<div className="h-10 rounded-md border bg-muted/40" />}>
+              <HeaderSearch />
+            </Suspense>
           </div>
         </div>
 

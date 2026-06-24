@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Fragment } from "react"
+import { Fragment, Suspense } from "react"
 
 import { JsonLd } from "@/components/seo/json-ld"
 import { BrowseFilters } from "@/components/manga/browse-filters"
@@ -15,6 +15,11 @@ import {
 } from "@/components/ui/pagination"
 import { browseSourceManga } from "@/lib/data/source"
 import { absoluteUrl, buildMetadata } from "@/lib/seo"
+
+// Browse is a per-request, paginated live view driven by the URL (page/q/sort);
+// render it dynamically. The underlying catalog fetches stay cached via their
+// own `revalidate`, so this only opts the page shell out of static prerender.
+export const dynamic = "force-dynamic"
 
 type SearchValue = string | string[] | undefined
 const BROWSE_PAGE_SIZE = 24
@@ -152,7 +157,13 @@ export default async function BrowsePage({
             browse state in the URL for sharable discovery across multiple sources.
           </p>
         </div>
-        <BrowseFilters initial={initial} />
+        <Suspense
+          fallback={
+            <div className="h-[7.5rem] rounded-xl border bg-card/70" />
+          }
+        >
+          <BrowseFilters initial={initial} />
+        </Suspense>
         <LiveMangaShelf
           title={`${result.total} result${result.total === 1 ? "" : "s"}`}
           description="These manga results are fetched server-side and updated from the current live source catalog."

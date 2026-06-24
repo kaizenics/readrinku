@@ -118,10 +118,43 @@ export async function browseSourceManga(
   sourceId: string = ALL_SOURCE_ID
 ): Promise<SourceBrowseResult> {
   if (isAllSources(sourceId)) {
+    const hasQuery = Boolean(filters.q?.trim())
+    const adapters = getAllSourceAdapters()
+    const catalogAdapters = adapters.filter((adapter) => adapter.catalog)
+
+    // Without a query, page directly through the catalog source(s) so the full
+    // upstream catalog (1500+ pages) is reachable instead of an in-memory merge.
+    if (!hasQuery && catalogAdapters.length > 0) {
+      const limit = filters.limit ?? 24
+      const page = clampPage(filters.page)
+      const results = await Promise.all(
+        catalogAdapters.map(async (adapter) => {
+          const result = await adapter.browse({ ...filters, limit, page })
+
+          return {
+            items: result.items.map((item) =>
+              normalizeMangaPreview(item, adapter.definition.id)
+            ),
+            total: result.total,
+          }
+        })
+      )
+
+      if (catalogAdapters.length === 1) {
+        return results[0]
+      }
+
+      return {
+        items: results.flatMap((result) => result.items),
+        total: results.reduce((sum, result) => sum + result.total, 0),
+      }
+    }
+
+    // Search (or sources without a catalog) aggregates across every source.
     const limit = filters.limit ?? 24
     const page = clampPage(filters.page)
     const results = await Promise.all(
-      getAllSourceAdapters().map(async (adapter) => {
+      adapters.map(async (adapter) => {
         const result = await adapter.browse({
           ...filters,
           limit: undefined,
