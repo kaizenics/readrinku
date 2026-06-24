@@ -31,6 +31,9 @@ export function CoverImage({
         alt={alt}
         fill
         priority={priority}
+        // Covers come from volatile third-party hosts; serve them directly so an
+        // unconfigured host never makes next/image throw and crash the page.
+        unoptimized
         className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
         sizes="(max-width: 768px) 50vw, 20vw"
       />

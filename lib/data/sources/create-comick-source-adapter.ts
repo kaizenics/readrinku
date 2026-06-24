@@ -200,6 +200,25 @@ export function parseRelativeDate(value: string | null | undefined) {
   return new Date(Date.now() - amount * unitSeconds * 1000).toISOString()
 }
 
+export function cleanSourceTitle(value: string) {
+  // Some sources append a view count after line breaks, e.g.
+  // "Solo Leveling\n   \n   9131331". Keep only the real title line.
+  const firstLine = value.split(/[\r\n]/)[0] ?? value
+
+  return firstLine
+    .replace(/\s+\d[\d,]*\s*$/, "")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+export function normalizeTitleKey(value: string) {
+  return cleanSourceTitle(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
 function parseIsoDate(value: string | null | undefined) {
   if (!value?.trim()) {
     return null
@@ -579,7 +598,7 @@ function buildSearchPreview(
 
   return {
     id: slug,
-    title: result.title?.trim() || toTitleCase(slug.replace(/^\d+-/, "")),
+    title: cleanSourceTitle(result.title ?? "") || toTitleCase(slug.replace(/^\d+-/, "")),
     altTitles: [],
     synopsis: "Synopsis unavailable from the selected source.",
     image: normalizeSourceImageUrl(result.coverImage ?? null),
@@ -695,7 +714,7 @@ function mapChapter(
   }
 }
 
-function sortChaptersDescending(chapters: SourceChapterInfo[]) {
+export function sortChaptersDescending(chapters: SourceChapterInfo[]) {
   return [...chapters].sort((left, right) => {
     const leftNumber = Number.parseFloat(left.chapter ?? "")
     const rightNumber = Number.parseFloat(right.chapter ?? "")
@@ -820,6 +839,14 @@ export function createComickSourceAdapter(
         chapters = apiChapters?.chapters ?? []
         totalChapters = apiChapters?.totalChapters ?? chapters.length
       }
+
+      // Stamp each chapter with its origin so merged lists can route the reader
+      // to the right source for page extraction.
+      chapters = chapters.map((chapter) => ({
+        ...chapter,
+        sourceId: definition.id,
+        sourceName: definition.name,
+      }))
 
       const details = parseDetails
         ? parseDetails({ html, slug, definition })

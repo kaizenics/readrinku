@@ -34,6 +34,7 @@ export function TrendingManga({ manga }: { manga: SourceMangaPreview[] }) {
                   src={entry.image}
                   alt={entry.title}
                   fill
+                  unoptimized
                   className="object-cover"
                   sizes="56px"
                 />

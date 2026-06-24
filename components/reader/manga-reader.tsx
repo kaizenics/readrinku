@@ -351,6 +351,7 @@ export function MangaReader({
                   alt={page.alt}
                   width={page.width}
                   height={page.height}
+                  unoptimized
                   className="h-auto w-full"
                   priority={page.pageNumber === 1}
                 />
@@ -378,6 +379,7 @@ export function MangaReader({
                 width={currentImage.width}
                 height={currentImage.height}
                 priority
+                unoptimized
                 className="mx-auto h-auto w-full rounded-md"
               />
             </div>

@@ -40,9 +40,12 @@ function mapChapterToLocal(
     number: Number.isFinite(parsedNumber) ? parsedNumber : index + 1,
     title: chapter.title,
     releaseDate: chapter.releaseDate ?? new Date(0).toISOString(),
+    releaseLabel: chapter.releaseLabel ?? null,
     pageCount: chapter.pageCount,
     readable: chapter.readable,
     sourceUrl: chapter.url,
+    sourceId: chapter.sourceId,
+    alternateSources: chapter.alternateSources,
   }
 }
 
@@ -109,16 +112,33 @@ export const getReaderMangaByIds = cache(
       return null
     }
 
-    const chapterSourceUrl = result.manga.chapters[chapterIndex]?.sourceUrl
+    const chapterEntry = result.manga.chapters[chapterIndex]
 
-    if (!chapterSourceUrl) {
-      return null
+    // Try the chapter's own source first, then any other source that also
+    // carries it, so a chapter that returns no pages on one source is recovered
+    // from another. A merged chapter may legitimately come from a non-primary
+    // source, so each candidate renders through whichever source serves it.
+    const pageCandidates: Array<{ url?: string; sourceId?: string }> = [
+      { url: chapterEntry?.sourceUrl, sourceId: chapterEntry?.sourceId },
+      ...(chapterEntry?.alternateSources ?? []),
+    ]
+
+    let pages: Awaited<ReturnType<typeof getSourceChapterPages>> = []
+
+    for (const candidate of pageCandidates) {
+      if (!candidate.url) {
+        continue
+      }
+
+      pages = await getSourceChapterPages(
+        candidate.url,
+        candidate.sourceId ?? result.sourceInfo.sourceId
+      )
+
+      if (pages.length) {
+        break
+      }
     }
-
-    const pages = await getSourceChapterPages(
-      chapterSourceUrl,
-      result.sourceInfo.sourceId
-    )
 
     if (!pages.length) {
       return null

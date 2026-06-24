@@ -54,6 +54,32 @@ export const sourceDefinitions: readonly SourceDefinition[] = [
       },
     ],
   },
+  {
+    id: "demonicscans",
+    name: "DemonicScans",
+    label: "Live source",
+    baseUrl: "https://demonicscans.org",
+    imageRemotePatterns: [
+      // Covers
+      {
+        protocol: "https",
+        hostname: "readermc.org",
+        pathname: "/**",
+      },
+      // Chapter pages (current CDN)
+      {
+        protocol: "https",
+        hostname: "mangareadon.org",
+        pathname: "/**",
+      },
+      // Legacy chapter CDN, kept as a fallback
+      {
+        protocol: "https",
+        hostname: "cdn.demoniclibs.com",
+        pathname: "/**",
+      },
+    ],
+  },
 ]
 
 export const DEFAULT_SOURCE_ID = sourceDefinitions[0].id
@@ -67,4 +93,46 @@ export function getSourceDefinition(sourceId: string) {
 
 export function getSourceImageRemotePatterns() {
   return sourceDefinitions.flatMap((definition) => definition.imageRemotePatterns)
+}
+
+function hostnameMatches(pattern: string, hostname: string) {
+  if (pattern.startsWith("**.")) {
+    // `**.example.com` matches example.com and any subdomain depth.
+    return hostname === pattern.slice(3) || hostname.endsWith(pattern.slice(2))
+  }
+
+  if (pattern.startsWith("*.")) {
+    return (
+      hostname.endsWith(pattern.slice(1)) &&
+      hostname.split(".").length === pattern.split(".").length
+    )
+  }
+
+  return hostname === pattern
+}
+
+// True only when the URL's host is allowed by next/image `remotePatterns`.
+// Used to drop covers from unexpected hosts (e.g. a source's generic OG
+// fallback image) before they reach next/image, which throws on render for an
+// unconfigured host and would crash the whole page.
+export function isConfiguredImageUrl(value: string | null | undefined) {
+  if (!value) {
+    return false
+  }
+
+  try {
+    const { hostname, protocol } = new URL(value)
+
+    if (protocol !== "https:" && protocol !== "http:") {
+      return false
+    }
+
+    return sourceDefinitions.some((definition) =>
+      definition.imageRemotePatterns.some((pattern) =>
+        hostnameMatches(pattern.hostname, hostname)
+      )
+    )
+  } catch {
+    return false
+  }
 }

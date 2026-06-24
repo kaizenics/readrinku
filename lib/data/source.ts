@@ -10,6 +10,7 @@ import {
 import {
   DEFAULT_SOURCE_ID,
   getSourceDefinition,
+  isConfiguredImageUrl,
 } from "@/lib/data/sources/source-config"
 import {
   getDefaultSourceAdapter,
@@ -17,12 +18,18 @@ import {
   getSourceAdapter,
   listSourceDefinitions,
 } from "@/lib/data/sources/registry"
-import { sortSourceMangaPreviews } from "@/lib/data/sources/create-comick-source-adapter"
+import {
+  normalizeTitleKey,
+  sortChaptersDescending,
+  sortSourceMangaPreviews,
+} from "@/lib/data/sources/create-comick-source-adapter"
+import type { SourceAdapter } from "@/lib/data/sources/types"
 import type {
   SourceBrowseFilters,
   SourceBrowseResult,
 } from "@/lib/data/sources/types"
 import type {
+  ChapterSourceRef,
   MangaPage,
   SourceChapterInfo,
   SourceMangaInfo,
@@ -71,6 +78,7 @@ function normalizeMangaInfo(info: SourceMangaInfo): SourceMangaInfo {
   return {
     ...info,
     id: mangaId,
+    image: isConfiguredImageUrl(info.image) ? info.image : null,
     chapters: info.chapters.map((chapter) => normalizeChapterInfo(chapter, mangaId)),
   }
 }
@@ -84,9 +92,130 @@ function normalizeMangaPreview(
   return {
     ...preview,
     id: mangaId,
+    image: isConfiguredImageUrl(preview.image) ? preview.image : null,
     recentChapters: preview.recentChapters.map((chapter) =>
       normalizeChapterInfo(chapter, mangaId)
     ),
+  }
+}
+
+// Collapse the same title coming from multiple sources into one card. Prefer the
+// entry with more chapters; ties keep the first occurrence (registry order).
+function dedupePreviewsByTitle(previews: SourceMangaPreview[]) {
+  const byKey = new Map<string, SourceMangaPreview>()
+
+  for (const preview of previews) {
+    const key = normalizeTitleKey(preview.title) || `id:${preview.id}`
+    const existing = byKey.get(key)
+
+    if (!existing || preview.chapterCount > existing.chapterCount) {
+      byKey.set(key, preview)
+    }
+  }
+
+  return [...byKey.values()]
+}
+
+function chapterNumberKey(chapter: SourceChapterInfo) {
+  const parsed = Number.parseFloat(chapter.chapter ?? "")
+  return Number.isFinite(parsed) ? String(parsed) : chapter.chapter ?? chapter.id
+}
+
+function mergeChapterLists(lists: SourceChapterInfo[][]) {
+  const byNumber = new Map<
+    string,
+    { chapter: SourceChapterInfo; alternates: ChapterSourceRef[] }
+  >()
+
+  // Lists are processed in priority order (primary first), so the primary
+  // source wins on shared chapter numbers; others become fallback sources used
+  // when the primary returns no pages.
+  for (const list of lists) {
+    for (const chapter of list) {
+      const key = chapterNumberKey(chapter)
+      const existing = byNumber.get(key)
+
+      if (!existing) {
+        byNumber.set(key, { chapter, alternates: [] })
+        continue
+      }
+
+      if (
+        chapter.sourceId &&
+        chapter.url &&
+        chapter.url !== existing.chapter.url &&
+        !existing.alternates.some((alt) => alt.url === chapter.url)
+      ) {
+        existing.alternates.push({
+          sourceId: chapter.sourceId,
+          sourceName: chapter.sourceName,
+          url: chapter.url,
+        })
+      }
+    }
+  }
+
+  return sortChaptersDescending(
+    [...byNumber.values()].map(({ chapter, alternates }) =>
+      alternates.length ? { ...chapter, alternateSources: alternates } : chapter
+    )
+  )
+}
+
+async function findMatchingSourceSlug(
+  adapter: SourceAdapter,
+  title: string,
+  titleKey: string
+) {
+  const result = await adapter.browse({ q: title, limit: 10, page: 1 })
+  const match = result.items.find(
+    (item) => normalizeTitleKey(item.title) === titleKey
+  )
+
+  return match?.id ?? null
+}
+
+// Fill a title's chapter list from every other source that carries the same
+// title, so missing chapters are recovered. Each chapter keeps its own source.
+async function mergeChaptersAcrossSources(
+  primary: SourceMangaInfo
+): Promise<SourceMangaInfo> {
+  const titleKey = normalizeTitleKey(primary.title)
+  const others = getAllSourceAdapters().filter(
+    (adapter) => adapter.definition.id !== primary.sourceId
+  )
+
+  if (!titleKey || others.length === 0) {
+    return primary
+  }
+
+  const otherChapterLists = await Promise.all(
+    others.map(async (adapter) => {
+      try {
+        const matchSlug = await findMatchingSourceSlug(adapter, primary.title, titleKey)
+
+        if (!matchSlug) {
+          return []
+        }
+
+        const info = await adapter.getMangaInfoBySlug(matchSlug)
+        return info?.chapters ?? []
+      } catch {
+        return []
+      }
+    })
+  )
+
+  const merged = mergeChapterLists([primary.chapters, ...otherChapterLists])
+
+  if (merged.length === primary.chapters.length) {
+    return primary
+  }
+
+  return {
+    ...primary,
+    chapters: merged,
+    chapterCount: merged.length,
   }
 }
 
@@ -103,7 +232,10 @@ export const getSourceHomepageManga = cache(
         })
       )
 
-      return sortSourceMangaPreviews(results.flat(), "updated").slice(0, limit)
+      return sortSourceMangaPreviews(
+        dedupePreviewsByTitle(results.flat()),
+        "updated"
+      ).slice(0, limit)
     }
 
     const adapter = getAdapter(sourceId)
@@ -170,7 +302,7 @@ export async function browseSourceManga(
     )
 
     const allItems = sortSourceMangaPreviews(
-      results.flatMap((result) => result.items),
+      dedupePreviewsByTitle(results.flatMap((result) => result.items)),
       filters.sort
     )
     const start = (page - 1) * limit
@@ -226,7 +358,12 @@ export const getSourceMangaInfo = cache(async (slug: string) => {
   const adapter = getAdapter(sourceId)
   const info = await adapter.getMangaInfoBySlug(sourceSlug)
 
-  return info ? normalizeMangaInfo(info) : null
+  if (!info) {
+    return null
+  }
+
+  const merged = await mergeChaptersAcrossSources(info)
+  return normalizeMangaInfo(merged)
 })
 
 export async function getSourceChapterPages(

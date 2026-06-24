@@ -38,6 +38,7 @@ export function MangaCard({
                 src={manga.coverImage}
                 alt={manga.title}
                 fill
+                unoptimized
                 className="object-cover transition-transform duration-200 group-hover:scale-[1.02]"
                 sizes="(max-width: 640px) 128px, 144px"
               />

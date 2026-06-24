@@ -27,9 +27,12 @@ export interface Chapter {
   number: number
   title: string
   releaseDate: string
+  releaseLabel?: string | null
   pageCount: number
   readable: boolean
   sourceUrl?: string
+  sourceId?: string
+  alternateSources?: ChapterSourceRef[]
   pages?: MangaPage[]
 }
 
@@ -53,6 +56,12 @@ export interface Manga {
   chapters: Chapter[]
 }
 
+export interface ChapterSourceRef {
+  sourceId: string
+  sourceName?: string
+  url: string
+}
+
 export interface SourceChapterInfo {
   id: string
   mangaId: string
@@ -65,6 +74,11 @@ export interface SourceChapterInfo {
   readable: boolean
   translatedLanguage: string
   url: string
+  /** Which source serves this chapter's pages (chapters can be merged across sources). */
+  sourceId?: string
+  sourceName?: string
+  /** Other sources that also carry this chapter, tried if the primary has no pages. */
+  alternateSources?: ChapterSourceRef[]
 }
 
 export interface SourceMangaInfo {
