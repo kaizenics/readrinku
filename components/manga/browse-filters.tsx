@@ -69,7 +69,7 @@ export function BrowseFilters({
     initial.sort !== "updated"
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border bg-card/70 p-4">
+    <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <InputGroup className="h-11 flex-1">
           <InputGroupAddon>

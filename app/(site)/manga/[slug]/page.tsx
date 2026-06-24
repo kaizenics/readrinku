@@ -139,7 +139,7 @@ export default async function MangaDetailsPage({
       <JsonLd data={pageSchema} />
       <div className="page-frame flex flex-col gap-8 py-8 sm:py-10">
         <section className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)_280px]">
-          <div className="xl:sticky xl:top-24 xl:self-start">
+          <div className="xl:self-start">
             <CoverImage src={display.coverImage} alt={display.title} priority />
           </div>
 
