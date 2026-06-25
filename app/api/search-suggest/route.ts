@@ -1,4 +1,5 @@
 import { getSearchMatches, getSearchSuggestions } from "@/lib/data/source"
+import { getFamilySafe } from "@/lib/data/family-safe"
 import { hasAdultTitle, isAdultContent } from "@/lib/readrinku"
 
 // Lightweight typeahead endpoint for the header search dropdown. It returns a
@@ -25,26 +26,33 @@ export async function GET(request: Request) {
     return Response.json({ q, items: [], total: 0, enriched: enrich })
   }
 
+  const familySafe = await getFamilySafe()
+  // Fetch a few extra when filtering, so a handful of adult hits don't leave the
+  // dropdown short of suggestions.
+  const fetchLimit = familySafe ? SUGGEST_LIMIT + 4 : SUGGEST_LIMIT
   const result = enrich
-    ? await getSearchSuggestions(q, SUGGEST_LIMIT)
-    : await getSearchMatches(q, SUGGEST_LIMIT)
+    ? await getSearchSuggestions(q, fetchLimit)
+    : await getSearchMatches(q, fetchLimit)
 
-  const items = result.items.map((manga) => ({
-    id: manga.id,
-    title: manga.title,
-    image: manga.image,
-    chapterCount: manga.chapterCount,
-    status: manga.status,
-    genre: manga.genres[0] ?? null,
-    // Carry the adult flag (not the raw genres) so the dropdown can blur covers
-    // without re-deriving the rating client-side. In the fast phase only the
-    // title check fires (genres aren't loaded yet); the enrich phase adds the
-    // MyAnimeList genres, and the title check still covers what MAL can't (e.g.
-    // doujinshi).
-    isAdult:
-      isAdultContent(manga.contentRating, manga.genres) ||
-      hasAdultTitle(manga.title, manga.altTitles),
-  }))
+  const items = result.items
+    .map((manga) => ({
+      id: manga.id,
+      title: manga.title,
+      image: manga.image,
+      chapterCount: manga.chapterCount,
+      status: manga.status,
+      genre: manga.genres[0] ?? null,
+      // Carry the adult flag (not the raw genres) so the dropdown can blur covers
+      // without re-deriving the rating client-side. In the fast phase only the
+      // title check fires (genres aren't loaded yet); the enrich phase adds the
+      // MyAnimeList genres, and the title check still covers what MAL can't (e.g.
+      // doujinshi).
+      isAdult:
+        isAdultContent(manga.contentRating, manga.genres) ||
+        hasAdultTitle(manga.title, manga.altTitles),
+    }))
+    .filter((manga) => !familySafe || !manga.isAdult)
+    .slice(0, SUGGEST_LIMIT)
 
   return Response.json({ q, items, total: result.total, enriched: enrich })
 }

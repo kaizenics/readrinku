@@ -24,7 +24,7 @@ import {
   sortSourceMangaPreviews,
 } from "@/lib/data/sources/create-comick-source-adapter"
 import { getMyAnimeListMetadata } from "@/lib/data/myanimelist"
-import { deriveContentRating, isAdultContent } from "@/lib/readrinku"
+import { deriveContentRating, hasAdultTitle, isAdultContent } from "@/lib/readrinku"
 import type { SourceAdapter } from "@/lib/data/sources/types"
 import type {
   SourceBrowseFilters,
@@ -361,7 +361,12 @@ export type { SourceBrowseFilters, SourceBrowseResult }
 // Adult/mature content is kept off the homepage shelves (it is still reachable
 // via Browse, search, and the Adult/Mature genre pages behind the age gate).
 function isAdultPreview(preview: SourceMangaPreview) {
-  return isAdultContent(preview.contentRating, preview.genres)
+  return (
+    isAdultContent(preview.contentRating, preview.genres) ||
+    // Catch title-obvious adult (doujinshi/erotica/etc.) even when a search
+    // result arrives without back-filled genres.
+    hasAdultTitle(preview.title, preview.altTitles)
+  )
 }
 
 export const getSourceHomepageManga = cache(
@@ -401,8 +406,12 @@ export const getSourceHomepageManga = cache(
 
 export async function browseSourceManga(
   filters: SourceBrowseFilters = {},
-  sourceId: string = ALL_SOURCE_ID
+  sourceId: string = ALL_SOURCE_ID,
+  familySafe = false
 ): Promise<SourceBrowseResult> {
+  const applyFamilySafe = (items: SourceMangaPreview[]) =>
+    familySafe ? items.filter((item) => !isAdultPreview(item)) : items
+
   if (isAllSources(sourceId)) {
     const hasQuery = Boolean(filters.q?.trim())
     const adapters = getAllSourceAdapters()
@@ -426,8 +435,8 @@ export async function browseSourceManga(
         })
       )
 
-      const items = await backfillMissingGenres(
-        results.flatMap((result) => result.items)
+      const items = applyFamilySafe(
+        await backfillMissingGenres(results.flatMap((result) => result.items))
       )
 
       return {
@@ -462,7 +471,9 @@ export async function browseSourceManga(
     const start = (page - 1) * limit
     // Back-fill only the visible page so search results get genres (and so adult
     // titles are gated) without enriching the whole aggregated list.
-    const items = await backfillMissingGenres(allItems.slice(start, start + limit))
+    const items = applyFamilySafe(
+      await backfillMissingGenres(allItems.slice(start, start + limit))
+    )
 
     return {
       items: await upgradeCoversFromMyAnimeList(items),
@@ -472,8 +483,10 @@ export async function browseSourceManga(
 
   const adapter = getAdapter(sourceId)
   const result = await adapter.browse(filters)
-  const items = await backfillMissingGenres(
-    result.items.map((item) => normalizeMangaPreview(item, adapter.definition.id))
+  const items = applyFamilySafe(
+    await backfillMissingGenres(
+      result.items.map((item) => normalizeMangaPreview(item, adapter.definition.id))
+    )
   )
 
   return {
@@ -615,7 +628,8 @@ export async function getSearchSuggestions(
 // Genre listings come from the catalog source's /genres/{slug} pages.
 export async function browseGenreManga(
   genre: string,
-  filters: SourceBrowseFilters = {}
+  filters: SourceBrowseFilters = {},
+  familySafe = false
 ): Promise<SourceBrowseResult> {
   const adapter = getAllSourceAdapters().find((entry) => entry.catalog)
 
@@ -624,12 +638,15 @@ export async function browseGenreManga(
   }
 
   const result = await adapter.browse({ ...filters, genre })
-  const items = await upgradeCoversFromMyAnimeList(
-    result.items.map((item) => normalizeMangaPreview(item, adapter.definition.id))
+  const previews = result.items.map((item) =>
+    normalizeMangaPreview(item, adapter.definition.id)
   )
+  const visible = familySafe
+    ? previews.filter((item) => !isAdultPreview(item))
+    : previews
 
   return {
-    items,
+    items: await upgradeCoversFromMyAnimeList(visible),
     total: result.total,
   }
 }

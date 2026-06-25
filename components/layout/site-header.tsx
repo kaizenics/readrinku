@@ -8,6 +8,7 @@ import { Suspense } from "react"
 import { toast } from "sonner"
 
 import { HeaderSearch } from "@/components/layout/header-search"
+import { FamilySafeToggle } from "@/components/layout/family-safe-toggle"
 import { cn } from "@/lib/utils"
 import { useReadRinku } from "@/components/providers/read-rinku-provider"
 import { Badge } from "@/components/ui/badge"
@@ -119,6 +120,7 @@ export function SiteHeader() {
               <span className="hidden sm:inline">Search</span>
             </Link>
           </Button>
+          <FamilySafeToggle />
           {session ? (
             <>
               <div className="hidden text-right sm:block">

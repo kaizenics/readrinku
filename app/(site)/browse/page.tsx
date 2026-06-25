@@ -14,6 +14,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { browseSourceManga } from "@/lib/data/source"
+import { getFamilySafe } from "@/lib/data/family-safe"
 import { absoluteUrl, buildMetadata } from "@/lib/seo"
 
 // Browse is a per-request, paginated live view driven by the URL (page/q/sort);
@@ -111,12 +112,17 @@ export default async function BrowsePage({
     sort: toSingle(params.sort) || "updated",
   }
 
-  const result = await browseSourceManga({
-    q: initial.q,
-    sort: initial.sort,
-    limit: BROWSE_PAGE_SIZE,
-    page: currentPage,
-  })
+  const familySafe = await getFamilySafe()
+  const result = await browseSourceManga(
+    {
+      q: initial.q,
+      sort: initial.sort,
+      limit: BROWSE_PAGE_SIZE,
+      page: currentPage,
+    },
+    undefined,
+    familySafe
+  )
   const totalPages = Math.max(1, Math.ceil(result.total / BROWSE_PAGE_SIZE))
   const normalizedPage = Math.min(currentPage, totalPages)
   const startResult = result.total === 0 ? 0 : (normalizedPage - 1) * BROWSE_PAGE_SIZE + 1

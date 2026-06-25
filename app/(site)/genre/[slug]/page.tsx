@@ -15,6 +15,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { browseGenreManga } from "@/lib/data/source"
+import { getFamilySafe } from "@/lib/data/family-safe"
 import { findGenre } from "@/lib/genres"
 import { absoluteUrl, buildMetadata } from "@/lib/seo"
 
@@ -88,10 +89,15 @@ export default async function GenrePage({
   const search = await searchParams
   const currentPage = toPage(search.page)
 
-  const result = await browseGenreManga(genre.slug, {
-    limit: GENRE_PAGE_SIZE,
-    page: currentPage,
-  })
+  const familySafe = await getFamilySafe()
+  const result = await browseGenreManga(
+    genre.slug,
+    {
+      limit: GENRE_PAGE_SIZE,
+      page: currentPage,
+    },
+    familySafe
+  )
   const totalPages = Math.max(1, Math.ceil(result.total / GENRE_PAGE_SIZE))
   const normalizedPage = Math.min(currentPage, totalPages)
   const startResult = result.total === 0 ? 0 : (normalizedPage - 1) * GENRE_PAGE_SIZE + 1
