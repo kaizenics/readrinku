@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import { HeaderSearch } from "@/components/layout/header-search"
 import { cn } from "@/lib/utils"
 import { useReadRinku } from "@/components/providers/read-rinku-provider"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   NavigationMenu,
@@ -39,16 +40,24 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b bg-background">
       <div className="page-frame flex min-h-16 items-center justify-between gap-4 py-2">
         <div className="flex min-w-0 flex-1 items-center gap-6">
-          <Link href="/" className="flex items-center" aria-label="ReadRinku home">
-            <Image
-              src="/readrinku.png"
-              alt="ReadRinku"
-              width={485}
-              height={187}
-              priority
-              className="h-9 w-auto brightness-0 invert"
-            />
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center" aria-label="ReadRinku home">
+              <Image
+                src="/readrinku.png"
+                alt="ReadRinku"
+                width={485}
+                height={187}
+                priority
+                className="h-9 w-auto brightness-0 invert"
+              />
+            </Link>
+            <Badge
+              variant="outline"
+              className="border-amber-500/40 bg-amber-500/15 font-semibold uppercase tracking-wide text-amber-400"
+            >
+              Beta
+            </Badge>
+          </div>
 
           <nav className="hidden items-center gap-1 md:flex">
             {topLinks.map(({ href, label }) => (
@@ -130,13 +139,10 @@ export function SiteHeader() {
           ) : (
             <div className="hidden items-center gap-2 sm:flex">
               <Button asChild variant="ghost" size="sm" className="h-8 px-3">
-                <Link href="/login">
+                <Link href="/">
                   <UserCircleIcon data-icon="inline-start" />
                   Login
                 </Link>
-              </Button>
-              <Button asChild size="sm" className="h-8 px-3">
-                <Link href="/register">Register</Link>
               </Button>
             </div>
           )}
