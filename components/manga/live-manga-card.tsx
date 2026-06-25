@@ -56,7 +56,7 @@ export function LiveMangaCard({ manga }: { manga: SourceMangaPreview }) {
 
   return (
     <Card className="group relative h-full overflow-hidden border bg-card">
-      <CardContent className="flex h-full gap-4 p-4">
+      <CardContent className="flex h-full gap-4 px-4">
         <Link
           href={mangaHref}
           onClick={guard(mangaHref)}
