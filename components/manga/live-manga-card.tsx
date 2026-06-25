@@ -3,7 +3,6 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowRightIcon, BookOpenTextIcon } from "@phosphor-icons/react/ssr"
 
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardTitle } from "@/components/ui/card"
@@ -27,14 +26,6 @@ import {
 } from "@/lib/readrinku"
 import { cn } from "@/lib/utils"
 import type { SourceMangaPreview } from "@/lib/types/readrinku"
-
-function summarize(value: string, maxLength = 170) {
-  if (value.length <= maxLength) {
-    return value
-  }
-
-  return `${value.slice(0, maxLength - 3).trimEnd()}...`
-}
 
 export function LiveMangaCard({ manga }: { manga: SourceMangaPreview }) {
   const router = useRouter()
@@ -122,10 +113,6 @@ export function LiveMangaCard({ manga }: { manga: SourceMangaPreview }) {
               <Badge variant="secondary">{mangaStatusLabels[manga.status]}</Badge>
               <span>{contentRatingLabels[manga.contentRating]}</span>
             </div>
-
-            <p className="line-clamp-4 text-sm leading-7 text-muted-foreground">
-              {summarize(manga.synopsis)}
-            </p>
           </div>
 
           <div className="mt-4 flex min-h-[8.5rem] flex-col gap-2">
@@ -182,23 +169,6 @@ export function LiveMangaCard({ manga }: { manga: SourceMangaPreview }) {
                   </div>
                 )
               })}
-          </div>
-
-          <div className="mt-auto flex items-center justify-between pt-4 text-sm">
-            <span className="text-muted-foreground">
-              {manga.chapterCount > 0
-                ? `${manga.chapterCount} chapters`
-                : "Chapter count unavailable"}
-            </span>
-            <Link
-              href={mangaHref}
-              onClick={guard(mangaHref)}
-              className="inline-flex items-center gap-1 font-medium text-foreground"
-            >
-              <BookOpenTextIcon />
-              Open
-              <ArrowRightIcon data-icon="inline-end" />
-            </Link>
           </div>
         </div>
       </CardContent>
