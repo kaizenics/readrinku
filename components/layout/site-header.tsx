@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { BookOpenIcon, DoorOpenIcon, HouseIcon, MagnifyingGlassIcon, StackIcon, UserCircleIcon } from "@phosphor-icons/react"
+import { DoorOpenIcon, HouseIcon, MagnifyingGlassIcon, UserCircleIcon } from "@phosphor-icons/react"
 import { usePathname } from "next/navigation"
 import { Suspense } from "react"
 import { toast } from "sonner"
@@ -24,8 +24,6 @@ import { mangaGenres } from "@/lib/genres"
 const topLinks = [
   { href: "/", label: "Home", icon: HouseIcon },
   { href: "/browse", label: "Browse", icon: MagnifyingGlassIcon },
-  { href: "/library", label: "Library", icon: StackIcon },
-  { href: "/history", label: "History", icon: BookOpenIcon },
 ]
 
 export function SiteHeader() {
