@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import Image from "next/image"
 
 import { cn } from "@/lib/utils"
@@ -21,10 +21,15 @@ export function RemoteCoverImage({
   fallbackLabel?: string
 }) {
   const [currentSrc, setCurrentSrc] = useState(src)
+  const [trackedSrc, setTrackedSrc] = useState(src)
 
-  useEffect(() => {
+  // Reset back to the new image when the src prop changes (and clear a prior
+  // error fallback). This render-time state adjustment is React's recommended
+  // alternative to a syncing effect.
+  if (src !== trackedSrc) {
+    setTrackedSrc(src)
     setCurrentSrc(src)
-  }, [src])
+  }
 
   if (!currentSrc) {
     return (
