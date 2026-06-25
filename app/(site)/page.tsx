@@ -82,10 +82,10 @@ export default async function HomePage() {
             <div className="page-frame w-full pb-12 sm:pb-16 lg:pb-20">
               <div className="max-w-4xl space-y-4">
                 <h1 className="max-w-3xl font-heading text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
-                  Read Manga Online for Free without Ads
+                  Read Your Favorites Online for Free without Ads
                 </h1>
                 <p className="max-w-3xl text-base leading-8 text-white/74 sm:text-lg">
-                  Browse live manga titles from multiple sources, open available chapters, and track local reading progress.
+                  Browse live titles from multiple sources, open available chapters, and track local reading progress.
                 </p>
               </div>
             </div>
