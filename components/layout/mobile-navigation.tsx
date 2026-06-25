@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { GearIcon, HouseIcon, MagnifyingGlassIcon } from "@phosphor-icons/react"
+import { GearIcon, HouseIcon, MagnifyingGlassIcon, SquaresFourIcon } from "@phosphor-icons/react"
 import { usePathname } from "next/navigation"
 
 import { cn } from "@/lib/utils"
@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 const mobileLinks = [
   { href: "/", label: "Home", icon: HouseIcon },
   { href: "/browse", label: "Browse", icon: MagnifyingGlassIcon },
+  { href: "/genres", label: "Genres", icon: SquaresFourIcon },
   { href: "/settings", label: "Settings", icon: GearIcon },
 ]
 
@@ -17,7 +18,7 @@ export function MobileNavigation() {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background md:hidden">
-      <div className="grid grid-cols-3 gap-1 px-2 py-2">
+      <div className="grid grid-cols-4 gap-1 px-2 py-2">
         {mobileLinks.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
