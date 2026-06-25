@@ -482,6 +482,73 @@ export async function browseSourceManga(
   }
 }
 
+// Typeahead suggestions for the header search. Built for speed: it runs only the
+// cheap aggregated source search (skipping the per-result detail-page back-fill,
+// whose pages are large and often too big to cache, so they re-fetch every time)
+// and enriches just the visible handful from MyAnimeList — a small, day-cached
+// JSON lookup that yields both the adult-gating genres and a full-size cover in
+// one call. The MAL pass is bounded by a hard timeout so a slow or rate-limited
+// lookup can never stall the dropdown; rows still render from the source's own
+// thumbnails, with title-based gating (see hasAdultTitle) as the fallback.
+const SUGGEST_MAL_TIMEOUT_MS = 2500
+
+export async function getSearchSuggestions(
+  q: string,
+  limit = 5
+): Promise<SourceBrowseResult> {
+  const query = q.trim()
+
+  if (!query) {
+    return { items: [], total: 0 }
+  }
+
+  const results = await Promise.all(
+    getAllSourceAdapters().map(async (adapter) => {
+      const result = await adapter
+        .browse({ q: query, limit: undefined, page: 1 })
+        .catch(() => ({ items: [] as SourceMangaPreview[] }))
+
+      return result.items.map((item) =>
+        normalizeMangaPreview(item, adapter.definition.id)
+      )
+    })
+  )
+
+  const ranked = sortSourceMangaPreviews(
+    dedupePreviewsByTitle(results.flat()),
+    "updated"
+  )
+  const top = ranked.slice(0, limit)
+
+  const enriched = await Promise.all(
+    top.map((preview) =>
+      withTimeout(
+        getMyAnimeListMetadata(preview.title, preview.altTitles ?? []),
+        SUGGEST_MAL_TIMEOUT_MS,
+        null
+      )
+    )
+  )
+
+  const items = top.map((preview, index) => {
+    const mal = enriched[index]
+    const genres = mal?.genres?.length ? mal.genres : preview.genres
+    const image =
+      mal?.coverImage && isConfiguredImageUrl(mal.coverImage)
+        ? mal.coverImage
+        : preview.image
+
+    return {
+      ...preview,
+      genres,
+      image,
+      contentRating: deriveContentRating(genres),
+    }
+  })
+
+  return { items, total: ranked.length }
+}
+
 // Genre listings come from the catalog source's /genres/{slug} pages.
 export async function browseGenreManga(
   genre: string,

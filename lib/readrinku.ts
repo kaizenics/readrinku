@@ -74,6 +74,18 @@ export function isAdultContent(
   return contentRating === "mature" || hasAdultGenre(genres)
 }
 
+// Cheap, network-free adult signal derived from the title itself (e.g. a
+// trailing "(Doujinshi)", or "Smut"/"Hentai" in the name). Used by the header
+// typeahead, which skips the heavier per-result genre back-fill for speed and so
+// can't always rely on real genres being present — this is the safety net that
+// still blurs the obvious cases instantly. A false positive only over-blurs.
+export function hasAdultTitle(title: string, altTitles: readonly string[] = []) {
+  return [title, ...altTitles].some((value) => {
+    const text = (value ?? "").toLowerCase()
+    return ADULT_GENRE_HINTS.some((hint) => text.includes(hint))
+  })
+}
+
 // Maps a source's genre tags onto our coarse content rating. Kept here so every
 // source adapter classifies adult/teen content identically.
 export function deriveContentRating(
