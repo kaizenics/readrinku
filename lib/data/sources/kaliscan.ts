@@ -177,8 +177,16 @@ function parseCatalogPage({
 const catalog: SourceCatalog = {
   pageSize: CATALOG_PAGE_SIZE,
   buildPageUrl: ({ baseUrl, page, sort }) => {
+    // KaliScan exposes four server-rendered listings; map our sort keys onto
+    // them so each browse sort pages through the real upstream ordering.
     const path =
-      sort === "title" ? "az-list" : sort === "chapters" ? "popular" : "latest"
+      sort === "title"
+        ? "az-list"
+        : sort === "popular" || sort === "chapters"
+          ? "popular"
+          : sort === "new" || sort === "added" || sort === "newest"
+            ? "newest"
+            : "latest"
     const url = new URL(`/${path}`, baseUrl)
     url.searchParams.set("page", String(page))
 

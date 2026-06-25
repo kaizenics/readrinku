@@ -739,8 +739,13 @@ export function sortSourceMangaPreviews(
   switch (sort) {
     case "title":
       return nextItems.sort((left, right) => left.title.localeCompare(right.title))
+    // Search results carry no popularity signal, so approximate "popular" with
+    // chapter count (a longer run usually means a more-followed series). The
+    // catalog browse path gets the real /popular ordering from upstream instead.
     case "chapters":
+    case "popular":
       return nextItems.sort((left, right) => right.chapterCount - left.chapterCount)
+    // "new"/"added"/"newest" and the default all fall back to recency here.
     default:
       return nextItems.sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
   }

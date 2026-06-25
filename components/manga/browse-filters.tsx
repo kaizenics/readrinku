@@ -87,14 +87,16 @@ export function BrowseFilters({
           value={initial.sort}
           onValueChange={(value) => updateParams({ sort: value, page: "" })}
         >
-          <SelectTrigger className="h-11 w-full lg:w-56">
+          <SelectTrigger className="h-11 w-full data-[size=default]:h-11 lg:w-56">
             <SelectValue placeholder="Sort" />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
               <SelectItem value="updated">Recently updated</SelectItem>
+              <SelectItem value="popular">Most Popular</SelectItem>
+              <SelectItem value="new">New Release</SelectItem>
+              <SelectItem value="added">Recently added</SelectItem>
               <SelectItem value="title">Title</SelectItem>
-              <SelectItem value="chapters">Most chapters</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
