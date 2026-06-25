@@ -41,6 +41,8 @@ import { isSameSourceMangaId } from "@/lib/data/sources/route-id"
 import type { Chapter, Manga, ReadingDirection } from "@/lib/types/readrinku"
 import { cn } from "@/lib/utils"
 
+const CONTROLS_AUTOHIDE_MS = 2200
+
 function getEffectiveDirection(
   titleDirection: ReadingDirection,
   behavior: "manga-default" | "force-ltr" | "force-rtl"
@@ -97,10 +99,13 @@ export function MangaReader({
   const nextChapter =
     currentChapterIndex > 0 ? readableChapters[currentChapterIndex - 1] : undefined
 
+  const alwaysOn = preferences.controlsVisibility === "always"
+
+  // Paged mode reveals the controls on interaction, then auto-hides them.
   const revealControls = useCallback(() => {
     setShowControls(true)
 
-    if (preferences.controlsVisibility === "always") {
+    if (alwaysOn) {
       return
     }
 
@@ -110,8 +115,24 @@ export function MangaReader({
 
     hideTimeoutRef.current = window.setTimeout(() => {
       setShowControls(false)
-    }, 2200)
-  }, [preferences.controlsVisibility])
+    }, CONTROLS_AUTOHIDE_MS)
+  }, [alwaysOn])
+
+  // Vertical mode is immersive: a tap toggles the bars (and scrolling tucks them
+  // away — see the scroll effect). No auto-hide timer; they stay until the next
+  // tap or scroll.
+  const toggleControls = useCallback(() => {
+    if (alwaysOn) {
+      return
+    }
+
+    if (hideTimeoutRef.current) {
+      window.clearTimeout(hideTimeoutRef.current)
+      hideTimeoutRef.current = null
+    }
+
+    setShowControls((value) => !value)
+  }, [alwaysOn])
 
   const goToPrevious = useCallback(() => {
     if (!canGoBack) {
@@ -132,7 +153,9 @@ export function MangaReader({
   }, [canGoForward, revealControls])
 
   useEffect(() => {
-    if (preferences.controlsVisibility === "always") {
+    if (alwaysOn) {
+      // The bars stay rendered while pinned (see `showControls || alwaysOn`), so
+      // there's nothing to schedule — just clear any pending hide timer.
       if (hideTimeoutRef.current) {
         window.clearTimeout(hideTimeoutRef.current)
         hideTimeoutRef.current = null
@@ -140,9 +163,11 @@ export function MangaReader({
       return
     }
 
+    // Briefly show the bars on load (so the tap-to-toggle affordance is seen),
+    // then tuck them away.
     hideTimeoutRef.current = window.setTimeout(() => {
       setShowControls(false)
-    }, 2200)
+    }, CONTROLS_AUTOHIDE_MS)
 
     return () => {
       if (hideTimeoutRef.current) {
@@ -150,7 +175,19 @@ export function MangaReader({
         hideTimeoutRef.current = null
       }
     }
-  }, [preferences.controlsVisibility])
+  }, [alwaysOn])
+
+  // Vertical mode: tuck the controls away as soon as the reader scrolls, so they
+  // stay out of the way while reading. A tap brings them back (toggleControls).
+  useEffect(() => {
+    if (preferences.mode !== "vertical" || alwaysOn) {
+      return
+    }
+
+    const onScroll = () => setShowControls(false)
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [preferences.mode, alwaysOn])
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -254,15 +291,14 @@ export function MangaReader({
   return (
     <div
       className="min-h-screen bg-background text-foreground"
-      onPointerMove={() => revealControls()}
-      onClick={() => revealControls()}
+      onPointerMove={preferences.mode === "paged" ? () => revealControls() : undefined}
     >
       <div
         className={cn(
-          "pointer-events-none fixed inset-x-0 top-0 z-30 border-b bg-background/92 backdrop-blur-sm transition-opacity duration-200",
-          showControls || preferences.controlsVisibility === "always"
-            ? "opacity-100"
-            : "opacity-0"
+          "pointer-events-none fixed inset-x-0 top-0 z-30 border-b bg-background/92 backdrop-blur-sm transition-[opacity,transform] duration-300",
+          showControls || alwaysOn
+            ? "translate-y-0 opacity-100"
+            : "-translate-y-full opacity-0"
         )}
       >
         <div className="page-frame pointer-events-auto flex min-h-16 items-center justify-between gap-4 py-3">
@@ -334,7 +370,10 @@ export function MangaReader({
         />
       </div>
 
-      <main className="px-4 pb-20 pt-24 sm:px-6">
+      <main
+        className="px-4 pb-20 pt-24 sm:px-6"
+        onClick={preferences.mode === "vertical" ? toggleControls : undefined}
+      >
         {preferences.mode === "vertical" ? (
           <div
             ref={verticalContainerRef}
@@ -389,10 +428,10 @@ export function MangaReader({
 
       <div
         className={cn(
-          "pointer-events-none fixed inset-x-0 bottom-0 z-30 border-t bg-background/92 backdrop-blur-sm transition-opacity duration-200",
-          showControls || preferences.controlsVisibility === "always"
-            ? "opacity-100"
-            : "opacity-0"
+          "pointer-events-none fixed inset-x-0 bottom-0 z-30 border-t bg-background/92 backdrop-blur-sm transition-[opacity,transform] duration-300",
+          showControls || alwaysOn
+            ? "translate-y-0 opacity-100"
+            : "translate-y-full opacity-0"
         )}
       >
         <div className="page-frame pointer-events-auto flex flex-col gap-3 py-3">
