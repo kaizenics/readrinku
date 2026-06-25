@@ -171,6 +171,71 @@ async function backfillMissingGenres(
   })
 }
 
+// KaliScan serves cover art as ~193px-wide thumbnails, so the listing grids look
+// soft. When a title has a confident MyAnimeList match we swap in MAL's full-size
+// cover instead. Best-effort and bounded: no match (or a rate-limited/slow
+// lookup) keeps the source thumbnail, so a card never ends up without an image.
+// Reuses the same cached lookup as the genre back-fill, so overlapping titles in
+// one request are fetched only once.
+const MAX_COVER_UPGRADE = 48
+const COVER_UPGRADE_CONCURRENCY = 6
+const COVER_UPGRADE_TIMEOUT_MS = 6000
+
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(fallback), ms)
+    promise.then(
+      (value) => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      () => {
+        clearTimeout(timer)
+        resolve(fallback)
+      }
+    )
+  })
+}
+
+async function upgradeCoversFromMyAnimeList(
+  previews: SourceMangaPreview[]
+): Promise<SourceMangaPreview[]> {
+  const targets = previews.slice(0, MAX_COVER_UPGRADE)
+  const upgraded = new Map<string, string>()
+  let cursor = 0
+
+  async function worker() {
+    while (cursor < targets.length) {
+      const preview = targets[cursor++]
+      const mal = await withTimeout(
+        getMyAnimeListMetadata(preview.title, preview.altTitles ?? []),
+        COVER_UPGRADE_TIMEOUT_MS,
+        null
+      )
+
+      if (mal?.coverImage && isConfiguredImageUrl(mal.coverImage)) {
+        upgraded.set(preview.id, mal.coverImage)
+      }
+    }
+  }
+
+  await Promise.all(
+    Array.from(
+      { length: Math.min(COVER_UPGRADE_CONCURRENCY, targets.length) },
+      worker
+    )
+  )
+
+  if (upgraded.size === 0) {
+    return previews
+  }
+
+  return previews.map((preview) => {
+    const image = upgraded.get(preview.id)
+    return image ? { ...preview, image } : preview
+  })
+}
+
 // Collapse the same title coming from multiple sources into one card. Prefer the
 // entry with more chapters; ties keep the first occurrence (registry order).
 function dedupePreviewsByTitle(previews: SourceMangaPreview[]) {
@@ -317,16 +382,20 @@ export const getSourceHomepageManga = cache(
         (preview) => !isAdultPreview(preview)
       )
 
-      return sortSourceMangaPreviews(safe, "updated").slice(0, limit)
+      return upgradeCoversFromMyAnimeList(
+        sortSourceMangaPreviews(safe, "updated").slice(0, limit)
+      )
     }
 
     const adapter = getAdapter(sourceId)
     const items = await adapter.getHomepageManga(limit * 3)
 
-    return items
-      .map((item) => normalizeMangaPreview(item, adapter.definition.id))
-      .filter((preview) => !isAdultPreview(preview))
-      .slice(0, limit)
+    return upgradeCoversFromMyAnimeList(
+      items
+        .map((item) => normalizeMangaPreview(item, adapter.definition.id))
+        .filter((preview) => !isAdultPreview(preview))
+        .slice(0, limit)
+    )
   }
 )
 
@@ -362,7 +431,7 @@ export async function browseSourceManga(
       )
 
       return {
-        items,
+        items: await upgradeCoversFromMyAnimeList(items),
         total: results.reduce((sum, result) => sum + result.total, 0),
       }
     }
@@ -396,7 +465,7 @@ export async function browseSourceManga(
     const items = await backfillMissingGenres(allItems.slice(start, start + limit))
 
     return {
-      items,
+      items: await upgradeCoversFromMyAnimeList(items),
       total: allItems.length,
     }
   }
@@ -409,7 +478,7 @@ export async function browseSourceManga(
 
   return {
     ...result,
-    items,
+    items: await upgradeCoversFromMyAnimeList(items),
   }
 }
 
@@ -425,11 +494,12 @@ export async function browseGenreManga(
   }
 
   const result = await adapter.browse({ ...filters, genre })
+  const items = await upgradeCoversFromMyAnimeList(
+    result.items.map((item) => normalizeMangaPreview(item, adapter.definition.id))
+  )
 
   return {
-    items: result.items.map((item) =>
-      normalizeMangaPreview(item, adapter.definition.id)
-    ),
+    items,
     total: result.total,
   }
 }
