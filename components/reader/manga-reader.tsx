@@ -6,7 +6,6 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   ArrowsOutCardinalIcon,
-  BookOpenIcon,
   CaretLeftIcon,
   CaretRightIcon,
   RowsIcon,
@@ -363,13 +362,6 @@ export function MangaReader({
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 top-0 z-20 w-1 bg-muted">
-        <div
-          className="absolute bottom-0 left-0 w-full bg-primary transition-[height] duration-150"
-          style={{ height: `${progressPercent}%` }}
-        />
-      </div>
-
       <main
         className="px-4 pb-20 pt-24 sm:px-6"
         onClick={preferences.mode === "vertical" ? toggleControls : undefined}
@@ -503,19 +495,21 @@ export function MangaReader({
               </div>
             )}
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
               {previousChapter ? (
                 <Button asChild variant="ghost" className="min-h-11 px-4">
                   <Link href={`/read/${manga.slug}/${previousChapter.slug}`}>
-                    <BookOpenIcon data-icon="inline-start" />
-                    Previous chapter
+                    <ArrowLeftIcon data-icon="inline-start" />
+                    <span className="sm:hidden">Previous</span>
+                    <span className="hidden sm:inline">Previous chapter</span>
                   </Link>
                 </Button>
               ) : null}
               {nextChapter ? (
                 <Button asChild variant="ghost" className="min-h-11 px-4">
                   <Link href={`/read/${manga.slug}/${nextChapter.slug}`}>
-                    Next chapter
+                    <span className="sm:hidden">Next</span>
+                    <span className="hidden sm:inline">Next chapter</span>
                     <ArrowRightIcon data-icon="inline-end" />
                   </Link>
                 </Button>
