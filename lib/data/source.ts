@@ -482,17 +482,59 @@ export async function browseSourceManga(
   }
 }
 
-// Typeahead suggestions for the header search. Built for speed: it runs only the
-// cheap aggregated source search (skipping the per-result detail-page back-fill,
-// whose pages are large and often too big to cache, so they re-fetch every time)
-// and enriches just the visible handful from MyAnimeList — a small, day-cached
-// JSON lookup that yields both the adult-gating genres and a full-size cover in
-// one call. The MAL pass is bounded by a hard timeout so a slow or rate-limited
-// lookup can never stall the dropdown; rows still render from the source's own
-// thumbnails, with title-based gating (see hasAdultTitle) as the fallback.
-const SUGGEST_MAL_TIMEOUT_MS = 2500
+// Rank search hits by how directly the title answers the query (exact, then
+// prefix, then substring, then everything the source matched some other way,
+// e.g. via alt titles), keeping the incoming order within each tier. This pulls
+// the canonical series above the recently-updated doujinshi/spin-offs that a
+// plain "updated" sort floats to the top for queries like "naruto".
+function searchRelevanceTier(
+  preview: SourceMangaPreview,
+  queryKey: string
+): number {
+  const keys = [preview.title, ...(preview.altTitles ?? [])].map(normalizeTitleKey)
 
-export async function getSearchSuggestions(
+  if (keys.includes(queryKey)) {
+    return 0
+  }
+  if (keys.some((key) => key.startsWith(queryKey))) {
+    return 1
+  }
+  if (keys.some((key) => key.includes(queryKey))) {
+    return 2
+  }
+
+  return 3
+}
+
+function rankSearchPreviews(previews: SourceMangaPreview[], query: string) {
+  const queryKey = normalizeTitleKey(query)
+
+  if (!queryKey) {
+    return previews
+  }
+
+  // Stable secondary order: previews arrive already sorted (by updated), so a
+  // stable sort on the relevance tier keeps that order inside each tier.
+  return previews
+    .map((preview, index) => ({
+      preview,
+      index,
+      tier: searchRelevanceTier(preview, queryKey),
+    }))
+    .sort((a, b) => a.tier - b.tier || a.index - b.index)
+    .map((entry) => entry.preview)
+}
+
+// The cheap half of the header typeahead: aggregate the per-source search (no
+// per-result detail-page back-fill, whose pages are large and often too big to
+// cache, so they re-fetch every time), dedupe, and relevance-rank. Rows render
+// from the source's own thumbnails, with title-based gating (see hasAdultTitle).
+// Each source is capped so one slow upstream search can't stall the dropdown —
+// a laggard is simply dropped from this query (the full /browse search, which
+// the "View all" link leads to, still waits on every source).
+const SUGGEST_SEARCH_TIMEOUT_MS = 3000
+
+export async function getSearchMatches(
   q: string,
   limit = 5
 ): Promise<SourceBrowseResult> {
@@ -504,9 +546,11 @@ export async function getSearchSuggestions(
 
   const results = await Promise.all(
     getAllSourceAdapters().map(async (adapter) => {
-      const result = await adapter
-        .browse({ q: query, limit: undefined, page: 1 })
-        .catch(() => ({ items: [] as SourceMangaPreview[] }))
+      const result = await withTimeout(
+        adapter.browse({ q: query, limit: undefined, page: 1 }),
+        SUGGEST_SEARCH_TIMEOUT_MS,
+        { items: [], total: 0 } as SourceBrowseResult
+      )
 
       return result.items.map((item) =>
         normalizeMangaPreview(item, adapter.definition.id)
@@ -514,14 +558,33 @@ export async function getSearchSuggestions(
     })
   )
 
-  const ranked = sortSourceMangaPreviews(
-    dedupePreviewsByTitle(results.flat()),
-    "updated"
+  const ranked = rankSearchPreviews(
+    sortSourceMangaPreviews(dedupePreviewsByTitle(results.flat()), "updated"),
+    query
   )
-  const top = ranked.slice(0, limit)
+
+  return { items: ranked.slice(0, limit), total: ranked.length }
+}
+
+// The enriched half: take the cheap matches and overlay MyAnimeList data for the
+// visible rows — a small, day-cached JSON lookup that yields both the adult-
+// gating genres and a full-size cover in one call. Bounded by a hard timeout so
+// a slow or rate-limited MAL can never stall the dropdown; on timeout the row
+// keeps its source thumbnail and falls back to title-based gating.
+const SUGGEST_MAL_TIMEOUT_MS = 2500
+
+export async function getSearchSuggestions(
+  q: string,
+  limit = 5
+): Promise<SourceBrowseResult> {
+  const matches = await getSearchMatches(q, limit)
+
+  if (matches.items.length === 0) {
+    return matches
+  }
 
   const enriched = await Promise.all(
-    top.map((preview) =>
+    matches.items.map((preview) =>
       withTimeout(
         getMyAnimeListMetadata(preview.title, preview.altTitles ?? []),
         SUGGEST_MAL_TIMEOUT_MS,
@@ -530,7 +593,7 @@ export async function getSearchSuggestions(
     )
   )
 
-  const items = top.map((preview, index) => {
+  const items = matches.items.map((preview, index) => {
     const mal = enriched[index]
     const genres = mal?.genres?.length ? mal.genres : preview.genres
     const image =
@@ -546,7 +609,7 @@ export async function getSearchSuggestions(
     }
   })
 
-  return { items, total: ranked.length }
+  return { items, total: matches.total }
 }
 
 // Genre listings come from the catalog source's /genres/{slug} pages.

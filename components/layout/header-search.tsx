@@ -37,6 +37,11 @@ type Suggestion = {
   isAdult: boolean
 }
 
+type SuggestResponse = {
+  items: Suggestion[]
+  total: number
+}
+
 const MIN_QUERY_LENGTH = 2
 const DEBOUNCE_MS = 300
 
@@ -64,9 +69,11 @@ export function HeaderSearch() {
   const browseHref = `/browse?q=${encodeURIComponent(trimmed)}`
   const showDropdown = open && trimmed.length >= MIN_QUERY_LENGTH
 
-  // Debounced typeahead fetch. The in-flight request is aborted whenever the
-  // query changes, so only the latest keystroke's results ever land. State is
-  // only written from the timer/async callbacks (never synchronously in the
+  // Debounced two-phase typeahead fetch. Phase 1 is the cheap source matches,
+  // shown instantly; phase 2 (`enrich=1`) overlays MyAnimeList covers + genres
+  // and patches the rows in place. The in-flight requests are aborted whenever
+  // the query changes, so only the latest keystroke's results ever land. State
+  // is only written from the timer/async callbacks (never synchronously in the
   // effect body); the too-short case is cleared in the change handler instead.
   useEffect(() => {
     if (trimmed.length < MIN_QUERY_LENGTH) {
@@ -74,18 +81,31 @@ export function HeaderSearch() {
     }
 
     const controller = new AbortController()
+    const query = encodeURIComponent(trimmed)
     const timer = setTimeout(() => {
-      fetch(`/api/search-suggest?q=${encodeURIComponent(trimmed)}`, {
-        signal: controller.signal,
-      })
+      fetch(`/api/search-suggest?q=${query}`, { signal: controller.signal })
         .then((res) =>
           res.ok ? res.json() : Promise.reject(new Error("Search failed"))
         )
-        .then((data: { items: Suggestion[]; total: number }) => {
+        .then((data: SuggestResponse) => {
           setResults(data.items)
           setTotal(data.total)
           setActiveIndex(-1)
           setLoading(false)
+
+          // Phase 2: enrich the same rows. The source search is now cached, so
+          // this mostly waits on MyAnimeList. A failure here is non-fatal — the
+          // fast matches stay on screen.
+          return fetch(`/api/search-suggest?q=${query}&enrich=1`, {
+            signal: controller.signal,
+          })
+        })
+        .then((res) => (res?.ok ? res.json() : null))
+        .then((data: SuggestResponse | null) => {
+          if (data) {
+            setResults(data.items)
+            setTotal(data.total)
+          }
         })
         .catch(() => {
           if (controller.signal.aborted) {
