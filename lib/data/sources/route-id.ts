@@ -1,4 +1,8 @@
-import { DEFAULT_SOURCE_ID } from "@/lib/data/sources/source-config"
+import {
+  DEFAULT_SOURCE_ID,
+  getSourceRouteCode,
+  resolveSourceRouteCode,
+} from "@/lib/data/sources/source-config"
 
 const SOURCE_ROUTE_SEPARATOR = "~"
 
@@ -64,7 +68,8 @@ export function encodeSourceMangaSlug(sourceId: string, sourceSlug: string) {
     return segment
   }
 
-  return `${sourceId}${SOURCE_ROUTE_SEPARATOR}${segment}`
+  // Use a short non-branded code (not the source's real name) in the URL.
+  return `${getSourceRouteCode(sourceId)}${SOURCE_ROUTE_SEPARATOR}${segment}`
 }
 
 export function decodeSourceMangaSlug(value: string) {
@@ -77,7 +82,9 @@ export function decodeSourceMangaSlug(value: string) {
     }
   }
 
-  const sourceId = value.slice(0, separatorIndex) || DEFAULT_SOURCE_ID
+  const prefix = value.slice(0, separatorIndex)
+  // Accept the short route code (new) or the raw source id (older ids).
+  const sourceId = prefix ? resolveSourceRouteCode(prefix) : DEFAULT_SOURCE_ID
   const sourceSlug = decodeSlugSegment(value.slice(separatorIndex + 1)) || value
 
   return { sourceId, sourceSlug }

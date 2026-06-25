@@ -84,6 +84,27 @@ export const sourceDefinitions: readonly SourceDefinition[] = [
 
 export const DEFAULT_SOURCE_ID = sourceDefinitions[0].id
 
+// Short, non-branded codes used in /manga route ids so a source's real name is
+// never exposed in URLs (the default source stays prefix-less). Stable per
+// source; `resolveSourceRouteCode` also accepts the raw source id, so links and
+// saved ids minted before this scheme still resolve.
+const sourceRouteCodes: Record<string, string> = {
+  "arya-scans": "s1",
+  demonicscans: "s2",
+}
+
+const sourceIdsByRouteCode: Record<string, string> = Object.fromEntries(
+  Object.entries(sourceRouteCodes).map(([sourceId, code]) => [code, sourceId])
+)
+
+export function getSourceRouteCode(sourceId: string) {
+  return sourceRouteCodes[sourceId] ?? sourceId
+}
+
+export function resolveSourceRouteCode(code: string) {
+  return sourceIdsByRouteCode[code] ?? code
+}
+
 export function getSourceDefinition(sourceId: string) {
   return (
     sourceDefinitions.find((definition) => definition.id === sourceId) ??
