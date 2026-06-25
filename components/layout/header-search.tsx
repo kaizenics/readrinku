@@ -55,7 +55,6 @@ export function HeaderSearch() {
   const [query, setQuery] = useState(currentQuery)
   const [results, setResults] = useState<Suggestion[]>([])
   const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
 
@@ -67,7 +66,9 @@ export function HeaderSearch() {
 
   const trimmed = query.trim()
   const browseHref = `/browse?q=${encodeURIComponent(trimmed)}`
-  const showDropdown = open && trimmed.length >= MIN_QUERY_LENGTH
+  // Only surface the dropdown once there are results — no "Searching…" or empty
+  // state, so it simply appears when matches are ready and stays hidden otherwise.
+  const showDropdown = open && results.length > 0
 
   // Debounced two-phase typeahead fetch. Phase 1 is the cheap source matches,
   // shown instantly; phase 2 (`enrich=1`) overlays MyAnimeList covers + genres
@@ -91,7 +92,6 @@ export function HeaderSearch() {
           setResults(data.items)
           setTotal(data.total)
           setActiveIndex(-1)
-          setLoading(false)
 
           // Phase 2: enrich the same rows. The source search is now cached, so
           // this mostly waits on MyAnimeList. A failure here is non-fatal — the
@@ -113,7 +113,6 @@ export function HeaderSearch() {
           }
           setResults([])
           setTotal(0)
-          setLoading(false)
         })
     }, DEBOUNCE_MS)
 
@@ -141,14 +140,11 @@ export function HeaderSearch() {
     setQuery(value)
     setOpen(true)
 
-    // Drive loading/clearing from the event so the effect stays write-free until
-    // its async callbacks resolve.
-    if (value.trim().length >= MIN_QUERY_LENGTH) {
-      setLoading(true)
-    } else {
+    // Clear stale rows once the query is too short to search; the dropdown only
+    // shows while there are results, so this also hides it.
+    if (value.trim().length < MIN_QUERY_LENGTH) {
       setResults([])
       setTotal(0)
-      setLoading(false)
     }
   }
 
@@ -242,77 +238,64 @@ export function HeaderSearch() {
 
       {showDropdown ? (
         <div className="absolute inset-x-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-xl border bg-popover text-popover-foreground shadow-xl">
-          {loading && results.length === 0 ? (
-            <div className="flex items-center gap-3 px-4 py-6 text-sm text-muted-foreground">
-              <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              Searching…
-            </div>
-          ) : results.length === 0 ? (
-            <div className="px-4 py-6 text-sm text-muted-foreground">
-              No results for “{trimmed}”.
-            </div>
-          ) : (
-            <ul className="max-h-[70vh] overflow-y-auto py-1">
-              {results.map((manga, index) => {
-                const gated = manga.isAdult && !confirmed
-                const meta = [
-                  manga.genre,
-                  mangaStatusLabels[manga.status],
-                  manga.chapterCount > 0 ? `${manga.chapterCount} ch` : null,
-                ].filter(Boolean)
+          <ul className="max-h-[70vh] overflow-y-auto py-1">
+            {results.map((manga, index) => {
+              const gated = manga.isAdult && !confirmed
+              const meta = [
+                manga.genre,
+                mangaStatusLabels[manga.status],
+                manga.chapterCount > 0 ? `${manga.chapterCount} ch` : null,
+              ].filter(Boolean)
 
-                return (
-                  <li key={manga.id}>
-                    <button
-                      type="button"
-                      onClick={() => go(manga)}
-                      onMouseEnter={() => setActiveIndex(index)}
-                      className={cn(
-                        "flex w-full items-center gap-3 px-3 py-2 text-left transition-colors",
-                        index === activeIndex ? "bg-muted" : "hover:bg-muted/60"
-                      )}
-                    >
-                      <span className="relative block h-16 w-12 shrink-0 overflow-hidden rounded-md border bg-muted">
-                        <RemoteCoverImage
-                          src={manga.image}
-                          alt={manga.title}
-                          sizes="48px"
-                          imageClassName={cn(gated && "scale-110 blur-md")}
-                          fallbackLabel={manga.title}
-                        />
-                        {gated ? (
-                          <span className="absolute inset-0 flex items-center justify-center bg-black/45 text-[10px] font-bold text-white">
-                            18+
-                          </span>
-                        ) : null}
-                      </span>
-                      <span className="flex min-w-0 flex-1 flex-col gap-1">
-                        <span className="truncate text-sm font-medium text-foreground">
-                          {manga.title}
+              return (
+                <li key={manga.id}>
+                  <button
+                    type="button"
+                    onClick={() => go(manga)}
+                    onMouseEnter={() => setActiveIndex(index)}
+                    className={cn(
+                      "flex w-full items-center gap-3 px-3 py-2 text-left transition-colors",
+                      index === activeIndex ? "bg-muted" : "hover:bg-muted/60"
+                    )}
+                  >
+                    <span className="relative block h-16 w-12 shrink-0 overflow-hidden rounded-md border bg-muted">
+                      <RemoteCoverImage
+                        src={manga.image}
+                        alt={manga.title}
+                        sizes="48px"
+                        imageClassName={cn(gated && "scale-110 blur-md")}
+                        fallbackLabel={manga.title}
+                      />
+                      {gated ? (
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/45 text-[10px] font-bold text-white">
+                          18+
                         </span>
-                        {meta.length > 0 ? (
-                          <span className="truncate text-xs text-muted-foreground">
-                            {meta.join(" · ")}
-                          </span>
-                        ) : null}
+                      ) : null}
+                    </span>
+                    <span className="flex min-w-0 flex-1 flex-col gap-1">
+                      <span className="truncate text-sm font-medium text-foreground">
+                        {manga.title}
                       </span>
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
+                      {meta.length > 0 ? (
+                        <span className="truncate text-xs text-muted-foreground">
+                          {meta.join(" · ")}
+                        </span>
+                      ) : null}
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
 
-          {results.length > 0 ? (
-            <Link
-              href={browseHref}
-              onClick={() => setOpen(false)}
-              className="flex items-center justify-between gap-2 border-t px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted/60"
-            >
-              <span>View all results{total > 0 ? ` (${total})` : ""}</span>
-              <ArrowRightIcon />
-            </Link>
-          ) : null}
+          <Link
+            href={browseHref}
+            onClick={() => setOpen(false)}
+            className="flex items-center justify-between gap-2 border-t px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted/60"
+          >
+            <span>View all results{total > 0 ? ` (${total})` : ""}</span>
+            <ArrowRightIcon />
+          </Link>
         </div>
       ) : null}
 
