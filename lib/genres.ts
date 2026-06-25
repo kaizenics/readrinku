@@ -29,7 +29,7 @@ export const mangaGenres: readonly MangaGenre[] = [
   { label: "Josei", slug: "josei" },
   { label: "Magic", slug: "magic" },
   { label: "Martial Arts", slug: "martial-arts" },
-  { label: "Mature", slug: "mature", adult: true },
+  { label: "Mature", slug: "mature" },
   { label: "Mecha", slug: "mecha" },
   { label: "Medical", slug: "medical" },
   { label: "Military", slug: "military" },

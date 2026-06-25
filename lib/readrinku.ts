@@ -33,6 +33,54 @@ export const contentRatingLabels: Record<ContentRating, string> = {
   mature: "Mature",
 }
 
+// Genres that mark a title as explicitly 18+ and trigger the blur / age gate.
+// Deliberately narrow: "mature" and "ecchi" are broad/suggestive (dark themes,
+// fan service) rather than explicit, so they are NOT gated — only genuinely
+// adult tags are. Substrings catch variants (erotic→Erotica, porn→Pornographic,
+// doujin→Doujinshi).
+export const ADULT_GENRE_HINTS = [
+  "adult",
+  "smut",
+  "hentai",
+  "erotic",
+  "porn",
+  "doujin",
+  "18+",
+]
+
+function hasAdultGenre(genres: readonly string[] | undefined) {
+  return (genres ?? []).some((genre) => {
+    const value = genre.toLowerCase()
+    return ADULT_GENRE_HINTS.some((hint) => value.includes(hint))
+  })
+}
+
+// Single source of truth for an explicit-adult listing/title. The "mature"
+// content rating is itself derived from these same genres (see
+// deriveContentRating), so the two checks stay in lockstep.
+export function isAdultContent(
+  contentRating: ContentRating | string | undefined,
+  genres: readonly string[] | undefined
+) {
+  return contentRating === "mature" || hasAdultGenre(genres)
+}
+
+// Maps a source's genre tags onto our coarse content rating. Kept here so every
+// source adapter classifies adult/teen content identically.
+export function deriveContentRating(
+  genres: readonly string[] | undefined
+): ContentRating {
+  if (hasAdultGenre(genres)) {
+    return "mature"
+  }
+
+  if ((genres ?? []).some((genre) => genre.toLowerCase().includes("teen"))) {
+    return "teen"
+  }
+
+  return "everyone"
+}
+
 export const readerModeLabels: Record<ReaderMode, string> = {
   vertical: "Vertical",
   paged: "Single page",

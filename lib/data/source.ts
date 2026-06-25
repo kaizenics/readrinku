@@ -24,6 +24,7 @@ import {
   sortSourceMangaPreviews,
 } from "@/lib/data/sources/create-comick-source-adapter"
 import { getMyAnimeListMetadata } from "@/lib/data/myanimelist"
+import { deriveContentRating, isAdultContent } from "@/lib/readrinku"
 import type { SourceAdapter } from "@/lib/data/sources/types"
 import type {
   SourceBrowseFilters,
@@ -98,6 +99,60 @@ function normalizeMangaPreview(
       normalizeChapterInfo(chapter, mangaId)
     ),
   }
+}
+
+// KaliScan's listing markup omits genres for some titles (commonly brand-new
+// uploads), which would let adult content slip past the browse blur. Worse, the
+// source frequently under-tags adult titles entirely (e.g. only "Seinen"), so we
+// also consult MyAnimeList — which carries the real genres — for these cards.
+// Bounded + cached so a page load stays cheap.
+const MAX_GENRE_BACKFILL = 12
+
+async function backfillMissingGenres(
+  adapter: SourceAdapter,
+  previews: SourceMangaPreview[]
+): Promise<SourceMangaPreview[]> {
+  const missing = previews.filter((preview) => preview.genres.length === 0)
+
+  if (missing.length === 0) {
+    return previews
+  }
+
+  const filled = new Map<string, string[]>()
+
+  await Promise.all(
+    missing.slice(0, MAX_GENRE_BACKFILL).map(async (preview) => {
+      const [info, mal] = await Promise.all([
+        adapter.getMangaInfoBySlug(preview.id).catch(() => null),
+        getMyAnimeListMetadata(preview.title, preview.altTitles ?? []).catch(
+          () => null
+        ),
+      ])
+
+      // Drop the source's label placeholder so it is not mistaken for a genre,
+      // then union with MyAnimeList's genres (the more reliable adult signal).
+      const sourceGenres = (info?.genres ?? []).filter(
+        (genre) => genre !== adapter.definition.label
+      )
+      const genres = [...new Set([...sourceGenres, ...(mal?.genres ?? [])])]
+
+      if (genres.length) {
+        filled.set(preview.id, genres)
+      }
+    })
+  )
+
+  if (filled.size === 0) {
+    return previews
+  }
+
+  return previews.map((preview) => {
+    const genres = filled.get(preview.id)
+
+    return genres
+      ? { ...preview, genres, contentRating: deriveContentRating(genres) }
+      : preview
+  })
 }
 
 // Collapse the same title coming from multiple sources into one card. Prefer the
@@ -224,26 +279,8 @@ export type { SourceBrowseFilters, SourceBrowseResult }
 
 // Adult/mature content is kept off the homepage shelves (it is still reachable
 // via Browse, search, and the Adult/Mature genre pages behind the age gate).
-const ADULT_GENRE_HINTS = [
-  "adult",
-  "mature",
-  "smut",
-  "hentai",
-  "ecchi",
-  "18+",
-  "pornographic",
-  "erotica",
-]
-
 function isAdultPreview(preview: SourceMangaPreview) {
-  if (preview.contentRating === "mature") {
-    return true
-  }
-
-  return preview.genres.some((genre) => {
-    const value = genre.toLowerCase()
-    return ADULT_GENRE_HINTS.some((hint) => value.includes(hint))
-  })
+  return isAdultContent(preview.contentRating, preview.genres)
 }
 
 export const getSourceHomepageManga = cache(
@@ -294,9 +331,10 @@ export async function browseSourceManga(
       const results = await Promise.all(
         catalogAdapters.map(async (adapter) => {
           const result = await adapter.browse({ ...filters, limit, page })
+          const items = await backfillMissingGenres(adapter, result.items)
 
           return {
-            items: result.items.map((item) =>
+            items: items.map((item) =>
               normalizeMangaPreview(item, adapter.definition.id)
             ),
             total: result.total,

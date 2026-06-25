@@ -1,6 +1,5 @@
 "use client"
 
-import { useSyncExternalStore } from "react"
 import { useRouter } from "next/navigation"
 
 import {
@@ -13,32 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-
-const STORAGE_KEY = "readrinku:adult-confirmed"
-const listeners = new Set<() => void>()
-
-function readConfirmed() {
-  try {
-    return window.localStorage.getItem(STORAGE_KEY) === "1"
-  } catch {
-    return false
-  }
-}
-
-function persistConfirmed() {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, "1")
-  } catch {
-    // ignore storage failures; the gate still opens for this view
-  }
-
-  listeners.forEach((listener) => listener())
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener)
-  return () => listeners.delete(listener)
-}
+import { confirmAdult, useAdultConfirmed } from "@/components/manga/adult-consent"
 
 // Blurs an adult genre's listing behind an 18+ confirmation. The choice is
 // remembered, so it only asks once across adult categories.
@@ -50,7 +24,7 @@ export function AgeGate({
   children: React.ReactNode
 }) {
   const router = useRouter()
-  const confirmed = useSyncExternalStore(subscribe, readConfirmed, () => false)
+  const confirmed = useAdultConfirmed()
 
   return (
     <>
@@ -74,7 +48,7 @@ export function AgeGate({
             <AlertDialogCancel onClick={() => router.push("/")}>
               No, take me back
             </AlertDialogCancel>
-            <AlertDialogAction onClick={persistConfirmed}>
+            <AlertDialogAction onClick={confirmAdult}>
               Yes, I am 18+
             </AlertDialogAction>
           </AlertDialogFooter>

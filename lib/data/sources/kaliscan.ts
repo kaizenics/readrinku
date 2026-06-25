@@ -20,8 +20,8 @@ import {
   getSourceDefinition,
   type SourceDefinition,
 } from "@/lib/data/sources/source-config"
+import { deriveContentRating } from "@/lib/readrinku"
 import type {
-  ContentRating,
   SourceChapterInfo,
   SourceMangaPreview,
 } from "@/lib/types/readrinku"
@@ -33,29 +33,6 @@ const sourceDefinition = getSourceDefinition("kaliscan")
 // with ~48 fully-detailed cards per page across ~1585 pages. We page through
 // those listings to expose the entire catalog.
 const CATALOG_PAGE_SIZE = 48
-
-const MATURE_GENRE_HINTS = [
-  "mature",
-  "adult",
-  "smut",
-  "hentai",
-  "ecchi",
-  "18+",
-]
-
-function mapContentRating(genres: string[]): ContentRating {
-  const lowered = genres.map((genre) => genre.toLowerCase())
-
-  if (lowered.some((genre) => MATURE_GENRE_HINTS.some((hint) => genre.includes(hint)))) {
-    return "mature"
-  }
-
-  if (lowered.some((genre) => genre.includes("teen"))) {
-    return "teen"
-  }
-
-  return "everyone"
-}
 
 function getMetaContent(html: string, key: string) {
   const match = html.match(
@@ -92,8 +69,7 @@ function parseLatestChapter(text: string) {
 
 function parseCatalogCard(
   block: string,
-  baseUrl: string,
-  definition: SourceDefinition
+  baseUrl: string
 ): SourceMangaPreview | null {
   const urlMatch = block.match(/href="(\/manga\/\d+[^"]*)"/i)
 
@@ -151,9 +127,12 @@ function parseCatalogCard(
     image,
     authors: [],
     artists: [],
-    genres: genres.length ? genres : [definition.label],
+    // Left empty when KaliScan's listing omits genres (common for brand-new
+    // uploads); browseSourceManga back-fills these from the detail page so adult
+    // titles are still caught.
+    genres,
     status: "ongoing",
-    contentRating: mapContentRating(genres),
+    contentRating: deriveContentRating(genres),
     readingDirection: "ltr",
     // Left blank so the adapter can stamp listing order as recency.
     updatedAt: "",
@@ -172,18 +151,16 @@ function parseCatalogCard(
 function parseCatalogPage({
   html,
   baseUrl,
-  definition,
 }: {
   html: string
   baseUrl: string
-  definition: SourceDefinition
 }): SourceCatalogPage {
   const blocks = html.split('<div class="book-item">').slice(1)
   const seen = new Set<string>()
   const previews: SourceMangaPreview[] = []
 
   for (const block of blocks) {
-    const preview = parseCatalogCard(block, baseUrl, definition)
+    const preview = parseCatalogCard(block, baseUrl)
 
     if (preview && !seen.has(preview.id)) {
       seen.add(preview.id)

@@ -1,23 +1,74 @@
+"use client"
+
+import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { ArrowRightIcon, BookOpenTextIcon } from "@phosphor-icons/react/ssr"
 
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardTitle } from "@/components/ui/card"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { RemoteCoverImage } from "@/components/manga/remote-cover-image"
+import { confirmAdult, useAdultConfirmed } from "@/components/manga/adult-consent"
 import {
   contentRatingLabels,
   formatRelativeLabel,
+  isAdultContent,
   mangaStatusLabels,
 } from "@/lib/readrinku"
-import { getMangaCardSummary } from "@/lib/data/source"
+import { cn } from "@/lib/utils"
 import type { SourceMangaPreview } from "@/lib/types/readrinku"
 
+function summarize(value: string, maxLength = 170) {
+  if (value.length <= maxLength) {
+    return value
+  }
+
+  return `${value.slice(0, maxLength - 3).trimEnd()}...`
+}
+
 export function LiveMangaCard({ manga }: { manga: SourceMangaPreview }) {
+  const router = useRouter()
+  const confirmed = useAdultConfirmed()
+  const isAdult = isAdultContent(manga.contentRating, manga.genres)
+  const gated = isAdult && !confirmed
+
+  const mangaHref = `/manga/${manga.id}`
+  const [open, setOpen] = useState(false)
+  const [pendingHref, setPendingHref] = useState(mangaHref)
+
+  // When the title is adult and unconfirmed, intercept navigation and ask first.
+  function guard(targetHref: string) {
+    return (event: React.MouseEvent) => {
+      if (gated) {
+        event.preventDefault()
+        setPendingHref(targetHref)
+        setOpen(true)
+      }
+    }
+  }
+
+  function accept() {
+    confirmAdult()
+    setOpen(false)
+    router.push(pendingHref)
+  }
+
   return (
     <Card className="group relative h-full overflow-hidden border bg-card">
       <CardContent className="flex h-full gap-4 p-4">
         <Link
-          href={`/manga/${manga.id}`}
+          href={mangaHref}
+          onClick={guard(mangaHref)}
           className="relative block w-38 shrink-0 self-stretch overflow-hidden rounded-md border bg-muted sm:w-52"
         >
           {manga.image ? (
@@ -25,14 +76,30 @@ export function LiveMangaCard({ manga }: { manga: SourceMangaPreview }) {
               src={manga.image}
               alt={manga.title}
               sizes="(max-width: 640px) 112px, 128px"
-              imageClassName="transition-transform duration-200 group-hover:scale-[1.02]"
+              imageClassName={cn(
+                "transition-transform duration-200 group-hover:scale-[1.02]",
+                gated && "scale-110 blur-2xl"
+              )}
               fallbackLabel={manga.title}
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-muted/60 p-4 text-center text-xs font-medium text-muted-foreground">
-              <span className="line-clamp-3">{manga.title}</span>
+              <span className={cn("line-clamp-3", gated && "blur-sm")}>
+                {manga.title}
+              </span>
             </div>
           )}
+
+          {gated ? (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 bg-black/45 text-center">
+              <span className="rounded-md border border-white/50 px-2 py-0.5 text-base font-bold text-white">
+                18+
+              </span>
+              <span className="px-2 text-[10px] font-medium uppercase tracking-wide text-white/85">
+                Tap to verify age
+              </span>
+            </div>
+          ) : null}
         </Link>
 
         <div className="flex min-w-0 flex-1 flex-col">
@@ -45,7 +112,7 @@ export function LiveMangaCard({ manga }: { manga: SourceMangaPreview }) {
               </span>
             </div>
 
-            <Link href={`/manga/${manga.id}`} className="block">
+            <Link href={mangaHref} onClick={guard(mangaHref)} className="block">
               <CardTitle className="line-clamp-2 font-heading text-lg leading-snug tracking-tight">
                 {manga.title}
               </CardTitle>
@@ -57,7 +124,7 @@ export function LiveMangaCard({ manga }: { manga: SourceMangaPreview }) {
             </div>
 
             <p className="line-clamp-4 text-sm leading-7 text-muted-foreground">
-              {getMangaCardSummary(manga)}
+              {summarize(manga.synopsis)}
             </p>
           </div>
 
@@ -82,6 +149,7 @@ export function LiveMangaCard({ manga }: { manga: SourceMangaPreview }) {
               .map((chapter) => {
                 const number = chapter.chapter?.trim()
                 const canRead = Boolean(number) && number !== "Chapter unavailable"
+                const chapterHref = `/read/${manga.id}/${chapter.id}`
                 const rowClassName =
                   "flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-xs"
                 const rowContent = (
@@ -102,7 +170,8 @@ export function LiveMangaCard({ manga }: { manga: SourceMangaPreview }) {
                 return canRead ? (
                   <Link
                     key={chapter.id}
-                    href={`/read/${manga.id}/${chapter.id}`}
+                    href={chapterHref}
+                    onClick={guard(chapterHref)}
                     className={`${rowClassName} transition-colors hover:border-foreground/40 hover:bg-muted/40`}
                   >
                     {rowContent}
@@ -122,7 +191,8 @@ export function LiveMangaCard({ manga }: { manga: SourceMangaPreview }) {
                 : "Chapter count unavailable"}
             </span>
             <Link
-              href={`/manga/${manga.id}`}
+              href={mangaHref}
+              onClick={guard(mangaHref)}
               className="inline-flex items-center gap-1 font-medium text-foreground"
             >
               <BookOpenTextIcon />
@@ -132,6 +202,24 @@ export function LiveMangaCard({ manga }: { manga: SourceMangaPreview }) {
           </div>
         </div>
       </CardContent>
+
+      {isAdult ? (
+        <AlertDialog open={open} onOpenChange={setOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Adult content ahead</AlertDialogTitle>
+              <AlertDialogDescription>
+                “{manga.title}” is an 18+ title. Please confirm you are 18 years or
+                older to continue.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>No, take me back</AlertDialogCancel>
+              <AlertDialogAction onClick={accept}>Yes, I am 18+</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
     </Card>
   )
 }

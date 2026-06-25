@@ -2,6 +2,7 @@ import "server-only"
 
 import { cache } from "react"
 
+import { deriveContentRating } from "@/lib/readrinku"
 import type {
   SourceAdapter,
   SourceBrowseFilters,
@@ -866,7 +867,7 @@ export function createComickSourceAdapter(
         authors: details.authors,
         artists: details.artists,
         status: details.status,
-        contentRating: "everyone",
+        contentRating: deriveContentRating(details.genres),
         readingDirection: "ltr",
         updatedAt:
           latestChapterDate ?? details.updatedAt ?? new Date(0).toISOString(),
