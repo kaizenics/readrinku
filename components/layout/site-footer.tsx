@@ -69,6 +69,12 @@ export function SiteFooter() {
         <div className="flex flex-col gap-2 border-t pt-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>ReadRinku does not store any files on our server, we only linked to the media which is hosted on 3rd party services.</p>
 
+          <Link
+            href="/terms"
+            className="inline-flex w-fit items-center rounded-md border px-3 py-1.5 font-medium text-foreground transition-colors hover:bg-muted"
+          >
+            Terms of Service
+          </Link>
         </div>
       </div>
     </footer>
