@@ -186,7 +186,7 @@ export function createOrganizationSchema() {
     "@type": "Organization",
     name: siteConfig.name,
     url: absoluteUrl("/"),
-    logo: absoluteUrl("/favicon.ico"),
+    logo: absoluteUrl("/readrinku-icon.png"),
   }
 }
 

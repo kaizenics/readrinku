@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 
 import { AppProvider } from "@/components/providers/app-provider"
+import { ThemedFavicon } from "@/components/layout/themed-favicon"
 import { indexRobots, siteConfig } from "@/lib/seo"
 
 import "./globals.css"
@@ -40,6 +41,13 @@ export const metadata: Metadata = {
   creator: siteConfig.name,
   publisher: siteConfig.name,
   category: siteConfig.category,
+  // SSR/no-JS/crawler baseline. ThemedFavicon swaps to the white version in dark
+  // mode on the client (the icon art is black).
+  icons: {
+    icon: "/readrinku-icon.png?v=1",
+    shortcut: "/readrinku-icon.png?v=1",
+    apple: "/readrinku-icon.png?v=1",
+  },
   alternates: {
     canonical: "/",
   },
@@ -83,6 +91,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-full bg-background font-sans text-foreground">
+        <ThemedFavicon />
         <AppProvider>{children}</AppProvider>
       </body>
     </html>
