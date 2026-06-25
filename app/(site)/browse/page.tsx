@@ -81,20 +81,20 @@ export async function generateMetadata({
 
   if (q) {
     return buildMetadata({
-      title: `Search Manga: ${q}`,
-      description: `Search results for ${q} inside the ReadRinku manga browser.`,
+      title: `Search: ${q}`,
+      description: `Search results for ${q} inside the ReadRinku browser.`,
       path: "/browse",
-      keywords: [q, `${q} manga`, `${q} chapters`],
+      keywords: [q, `${q} comics`, `${q} chapters`],
       noIndex: true,
     })
   }
 
   return buildMetadata({
-    title: "Browse Manga",
+    title: "Browse Comics",
     description:
-      "Browse manga titles, compare recent updates, and discover readable series from the ReadRinku source catalog.",
+      "Browse titles, compare recent updates, and discover readable series from the ReadRinku source catalog.",
     path: "/browse",
-    keywords: ["browse manga", "manga search", "manga discovery"],
+    keywords: ["browse comics", "comic search", "comic discovery"],
   })
 }
 
@@ -127,11 +127,11 @@ export default async function BrowsePage({
     {
       "@context": "https://schema.org",
       "@type": initial.q ? "SearchResultsPage" : "CollectionPage",
-      name: initial.q ? `Manga search results for ${initial.q}` : "Browse manga",
+      name: initial.q ? `Search results for ${initial.q}` : "Browse comics",
       url: absoluteUrl(initial.q ? `/browse?q=${encodeURIComponent(initial.q)}` : "/browse"),
       description: initial.q
-        ? `Search results for ${initial.q} in the ReadRinku manga browser.`
-        : "Browse manga discovery results and recent source updates in ReadRinku.",
+        ? `Search results for ${initial.q} in the ReadRinku browser.`
+        : "Browse comic discovery results and recent source updates in ReadRinku.",
       mainEntity: {
         "@type": "ItemList",
         itemListElement: result.items.map((entry, index) => ({
@@ -150,10 +150,10 @@ export default async function BrowsePage({
       <div className="page-frame flex flex-col gap-8 py-8 sm:py-10">
         <div className="flex flex-col gap-2">
           <h1 className="font-heading text-3xl font-semibold tracking-tight">
-            Browse manga
+            Browse comics
           </h1>
           <p className="max-w-2xl text-sm text-muted-foreground">
-            Search live manga titles, compare recent updates, and keep the current
+            Search live titles, compare recent updates, and keep the current
             browse state in the URL for sharable discovery across multiple sources.
           </p>
         </div>

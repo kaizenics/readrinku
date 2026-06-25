@@ -27,8 +27,7 @@ export function SiteFooter() {
               />
             </Link>
             <p className="max-w-xl text-sm leading-7 text-muted-foreground">
-              ReadRinku is a frontend manga reader prototype focused on discovery,
-              chapter browsing, and a calmer reading flow across desktop and mobile.
+             &copy; {year} ReadRinku
             </p>
           </div>
 
@@ -68,7 +67,7 @@ export function SiteFooter() {
         </div>
 
         <div className="flex flex-col gap-2 border-t pt-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>&copy; {year} ReadRinku</p>
+          <p>ReadRinku does not store any files on our server, we only linked to the media which is hosted on 3rd party services.</p>
 
         </div>
       </div>

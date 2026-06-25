@@ -114,7 +114,7 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-2">
           <Button asChild variant="outline" size="sm" className="h-11 px-3 lg:hidden">
-            <Link href="/browse" aria-label="Search manga or manhwa">
+            <Link href="/browse" aria-label="Search comics or webtoons">
               <MagnifyingGlassIcon />
               <span className="hidden sm:inline">Search</span>
             </Link>

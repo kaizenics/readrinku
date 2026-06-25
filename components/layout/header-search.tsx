@@ -220,8 +220,8 @@ export function HeaderSearch() {
             onChange={(event) => onQueryChange(event.target.value)}
             onFocus={() => setOpen(true)}
             onKeyDown={onKeyDown}
-            placeholder="Search manga or manhwa"
-            aria-label="Search manga or manhwa"
+            placeholder="Search comics or webtoons"
+            aria-label="Search comics or webtoons"
             aria-expanded={showDropdown}
             aria-autocomplete="list"
             role="combobox"

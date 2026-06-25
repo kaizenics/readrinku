@@ -8,7 +8,7 @@ import { buildNoIndexMetadata } from "@/lib/seo"
 export const metadata: Metadata = buildNoIndexMetadata({
   title: "Login",
   description:
-    "Sign in to the ReadRinku demo reader to restore local progress, preferences, and saved manga lists on this device.",
+    "Sign in to the ReadRinku demo reader to restore local progress, preferences, and saved reading lists on this device.",
   path: "/login",
 })
 

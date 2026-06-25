@@ -6,7 +6,7 @@ import { buildNoIndexMetadata } from "@/lib/seo"
 export const metadata: Metadata = buildNoIndexMetadata({
   title: "Settings",
   description:
-    "Adjust theme, reader defaults, and local demo persistence settings for the ReadRinku manga reader.",
+    "Adjust theme, reader defaults, and local demo persistence settings for the ReadRinku comic reader.",
   path: "/settings",
 })
 

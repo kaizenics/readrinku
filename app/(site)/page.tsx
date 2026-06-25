@@ -17,15 +17,15 @@ import {
 } from "@/lib/seo"
 
 export const metadata: Metadata = buildMetadata({
-  title: "Online Manga Reader and Manga Discovery",
+  title: "",
   description:
-    "Browse live manga titles from multiple sources, open available chapters, and track local reading progress with a cleaner online manga reader built for calmer reading sessions.",
+    "Browse live titles from multiple sources, open available chapters, and track local reading progress with a cleaner online reader built for calmer reading sessions.",
   path: "/",
   keywords: [
-    "manga homepage",
-    "manga discovery platform",
-    "online manga browsing",
-    "read manga chapters",
+    "comic homepage",
+    "comic discovery platform",
+    "online comic browsing",
+    "read comic chapters",
   ],
 })
 
@@ -52,12 +52,12 @@ export default async function HomePage() {
       "@type": "CollectionPage",
       name: "ReadRinku homepage",
       description:
-        "Homepage for browsing featured manga, recent updates, and current manga discovery inside ReadRinku.",
+        "Homepage for browsing featured comics, recent updates, and current comic discovery inside ReadRinku.",
       url: absoluteUrl("/"),
-      about: ["manga reader", "manga discovery", "browse manga online"],
+      about: ["comic reader", "comic discovery", "browse comics online"],
       mainEntity: {
         "@type": "ItemList",
-        name: "Featured manga",
+        name: "Featured comics",
         itemListElement: featuredItems,
       },
     },
@@ -95,17 +95,17 @@ export default async function HomePage() {
         <div className="page-frame flex flex-col gap-10 py-8 sm:py-10">
           <FeaturedManga manga={featured} />
           <LiveMangaShelf
-            title="Latest manga updates"
-            description="Fresh manga titles and chapter updates for readers tracking what is new."
+            title="Latest comic updates"
+            description="Fresh titles and chapter updates for readers tracking what is new."
             manga={latest}
           />
           <LiveMangaShelf
             title="Source spotlight"
-            description="More live manga picks surfaced for readers who want another slice of current releases."
+            description="More live picks surfaced for readers who want another slice of current releases."
             manga={spotlight}
           />
           <LiveMangaShelf
-            title="More manga to explore"
+            title="More comics to explore"
             description="More live series surfaced for deeper browsing and quick chapter discovery."
             manga={archive}
           />

@@ -18,8 +18,8 @@ export default async function OpenGraphImage({
   const { slug } = await params
   const result = await getMangaInfoBySlug(slug)
 
-  const title = result?.display.title ?? "Manga details"
-  const genres = result?.display.genres.slice(0, 3).join(" • ") ?? "Read manga online"
+  const title = result?.display.title ?? "Comic details"
+  const genres = result?.display.genres.slice(0, 3).join(" • ") ?? "Read comics online"
   const synopsis =
     result?.manga.synopsis.slice(0, 180).trimEnd() ??
     "Browse titles, chapters, and reading details inside ReadRinku."

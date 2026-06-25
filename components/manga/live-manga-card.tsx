@@ -105,10 +105,10 @@ export function LiveMangaCard({ manga }: { manga: SourceMangaPreview }) {
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex min-w-0 flex-col gap-2">
             <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-              <span className="truncate">{manga.genres[0] ?? "Manga"}</span>
+              <span className="truncate">{manga.genres[0] ?? "Comic"}</span>
               <span className="h-1 w-1 rounded-full bg-border" />
               <span className="truncate">
-                {manga.readingDirection === "rtl" ? "Manga" : "Series"}
+                {manga.readingDirection === "rtl" ? "Comic" : "Series"}
               </span>
             </div>
 

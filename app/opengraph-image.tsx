@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og"
 
 import { siteConfig } from "@/lib/seo"
 
-export const alt = `${siteConfig.name} manga reader preview`
+export const alt = `${siteConfig.name} comic reader preview`
 export const size = {
   width: 1200,
   height: 630,
@@ -54,7 +54,7 @@ export default function OpenGraphImage() {
               gap: "6px",
             }}
           >
-            <div style={{ fontSize: "24px", opacity: 0.88 }}>Online manga reader</div>
+            <div style={{ fontSize: "24px", opacity: 0.88 }}>Online comic reader</div>
             <div style={{ fontSize: "42px", fontWeight: 700 }}>{siteConfig.name}</div>
           </div>
         </div>

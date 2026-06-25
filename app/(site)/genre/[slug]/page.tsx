@@ -57,17 +57,17 @@ export async function generateMetadata({
   if (!genre) {
     return buildMetadata({
       title: "Genre Not Found",
-      description: "This manga genre could not be found in ReadRinku.",
+      description: "This genre could not be found in ReadRinku.",
       path: `/genre/${slug}`,
       noIndex: true,
     })
   }
 
   return buildMetadata({
-    title: `${genre.label} Manga`,
-    description: `Browse ${genre.label} manga and manhwa and read available chapters in ReadRinku.`,
+    title: `${genre.label} Comics`,
+    description: `Browse ${genre.label} comics and webtoons and read available chapters in ReadRinku.`,
     path: `/genre/${genre.slug}`,
-    keywords: [`${genre.label} manga`, `${genre.label} manhwa`, `read ${genre.label} manga`],
+    keywords: [`${genre.label} comics`, `${genre.label} webtoons`, `read ${genre.label} comics`],
   })
 }
 
@@ -102,9 +102,9 @@ export default async function GenrePage({
     {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
-      name: `${genre.label} manga`,
+      name: `${genre.label} comics`,
       url: absoluteUrl(`/genre/${genre.slug}`),
-      description: `Browse ${genre.label} manga and manhwa in ReadRinku.`,
+      description: `Browse ${genre.label} comics and webtoons in ReadRinku.`,
       mainEntity: {
         "@type": "ItemList",
         itemListElement: result.items.map((entry, index) => ({
@@ -180,10 +180,10 @@ export default async function GenrePage({
             Genre
           </p>
           <h1 className="font-heading text-3xl font-semibold tracking-tight">
-            {genre.label} manga
+            {genre.label} comics
           </h1>
           <p className="max-w-2xl text-sm text-muted-foreground">
-            {genre.label} manga and manhwa from the live source catalog — open any
+            {genre.label} comics and webtoons from the live source catalog — open any
             title to read its available chapters.
           </p>
         </div>

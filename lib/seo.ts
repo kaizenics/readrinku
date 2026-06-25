@@ -18,19 +18,19 @@ export const siteConfig = {
   name: "ReadRinku",
   shortName: "ReadRinku",
   description:
-    "ReadRinku is a clean online manga reader for browsing live titles, opening available chapters, and tracking reading progress with a calmer reading flow.",
+    "ReadRinku is a clean online comic reader for browsing live titles, opening available chapters, and tracking reading progress with a calmer reading flow.",
   locale: "en_US",
   category: "entertainment",
   siteUrl: normalizeSiteUrl(
     process.env.NEXT_PUBLIC_SITE_URL ?? process.env.SITE_URL
   ),
   keywords: [
-    "online manga reader",
-    "read manga online",
-    "manga reader app",
-    "manga discovery",
-    "browse manga chapters",
-    "track manga reading progress",
+    "online comic reader",
+    "read comics online",
+    "comic reader app",
+    "comic discovery",
+    "browse comic chapters",
+    "track comic reading progress",
     "ReadRinku",
   ],
 } as const
@@ -103,12 +103,19 @@ export function buildMetadata({
   noIndex = false,
   type = "website",
 }: BuildMetadataInput = {}): Metadata {
-  const resolvedTitle = title ?? siteConfig.name
+  const hasTitle = Boolean(title?.trim())
+  const resolvedTitle = hasTitle ? (title as string) : siteConfig.name
+  // With a page title, let the root template render "Title | ReadRinku". Without
+  // one (e.g. the homepage), emit the bare site name as an absolute title so it
+  // shows just "ReadRinku" instead of "ReadRinku | ReadRinku" or " | ReadRinku".
+  const documentTitle: Metadata["title"] = hasTitle
+    ? resolvedTitle
+    : { absolute: siteConfig.name }
   const resolvedDescription = truncateDescription(description)
   const resolvedImage = resolveImageUrl(image)
 
   return {
-    title: resolvedTitle,
+    title: documentTitle,
     description: resolvedDescription,
     applicationName: siteConfig.name,
     category: siteConfig.category,

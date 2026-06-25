@@ -47,8 +47,8 @@ export async function generateMetadata({
 
   if (!result) {
     return buildMetadata({
-      title: "Manga Not Found",
-      description: "This manga title could not be found in ReadRinku.",
+      title: "Comic Not Found",
+      description: "This title could not be found in ReadRinku.",
       path: `/manga/${slug}`,
       noIndex: true,
     })
@@ -60,12 +60,12 @@ export async function generateMetadata({
   )
 
   return buildMetadata({
-    title: `${display.title} Manga`,
+    title: `${display.title} Comic`,
     description,
     path: `/manga/${slug}`,
     keywords: [
       display.title,
-      `${display.title} manga`,
+      `${display.title} comic`,
       `${display.title} chapters`,
       ...display.genres,
       ...manga.authors,
@@ -101,7 +101,7 @@ export default async function MangaDetailsPage({
     {
       "@context": "https://schema.org",
       "@type": "WebPage",
-      name: `${display.title} manga details`,
+      name: `${display.title} comic details`,
       url: absoluteUrl(`/manga/${manga.slug}`),
       description: truncateDescription(manga.synopsis),
       about: display.genres,
@@ -156,7 +156,7 @@ export default async function MangaDetailsPage({
               </div>
               <div className="flex flex-col gap-1">
                 <CardDescription className="uppercase tracking-[0.24em]">
-                  Manga details
+                  Comic details
                 </CardDescription>
                 <h1 className="font-heading text-4xl font-semibold tracking-tight">
                   {display.title}
@@ -210,7 +210,7 @@ export default async function MangaDetailsPage({
                 Details
               </CardTitle>
               <CardDescription>
-                Quick metadata for this manga title.
+                Quick metadata for this title.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">

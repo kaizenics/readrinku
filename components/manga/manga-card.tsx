@@ -52,7 +52,7 @@ export function MangaCard({
               <span className="truncate">{manga.genres[0]}</span>
               <span className="h-1 w-1 rounded-full bg-border" />
               <span className="truncate">
-                {manga.readingDirection === "rtl" ? "Manga" : "Series"}
+                {manga.readingDirection === "rtl" ? "Comic" : "Series"}
               </span>
             </div>
 

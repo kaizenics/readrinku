@@ -7,9 +7,9 @@ import { buildMetadata } from "@/lib/seo"
 export const metadata: Metadata = buildMetadata({
   title: "Genres",
   description:
-    "Browse manga and manhwa by genre on ReadRinku — pick a category to read available chapters.",
+    "Browse comics and webtoons by genre on ReadRinku — pick a category to read available chapters.",
   path: "/genres",
-  keywords: ["manga genres", "manhwa genres", "browse manga by genre"],
+  keywords: ["comic genres", "webtoon genres", "browse comics by genre"],
 })
 
 // Mobile-friendly full listing of every genre. Desktop exposes the same set
@@ -24,7 +24,7 @@ export default function GenresPage() {
         </p>
         <h1 className="font-heading text-3xl font-semibold tracking-tight">Genres</h1>
         <p className="max-w-2xl text-sm text-muted-foreground">
-          Pick a genre to explore manga and manhwa from the live catalog.
+          Pick a genre to explore comics and webtoons from the live catalog.
         </p>
       </div>
 
