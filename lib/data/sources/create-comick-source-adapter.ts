@@ -576,8 +576,7 @@ export function buildRecentChapters({
 }
 
 function buildSearchPreview(
-  result: SourceSearchResult,
-  definition: SourceDefinition
+  result: SourceSearchResult
 ): SourceMangaPreview | null {
   const url = result.url?.trim()
 
@@ -606,7 +605,9 @@ function buildSearchPreview(
     image: normalizeSourceImageUrl(result.coverImage ?? null),
     authors: [],
     artists: [],
-    genres: [definition.label],
+    // Search results carry no genres; left empty so browseSourceManga back-fills
+    // them (from the detail page / MyAnimeList) and adult titles get gated.
+    genres: [],
     status: "ongoing",
     contentRating: "everyone",
     readingDirection: "ltr",
@@ -1025,7 +1026,7 @@ export function createComickSourceAdapter(
       const previews: SourceMangaPreview[] = []
 
       for (const result of response?.results ?? []) {
-        const preview = buildSearchPreview(result, definition)
+        const preview = buildSearchPreview(result)
 
         if (preview && !seen.has(preview.id)) {
           seen.add(preview.id)

@@ -101,15 +101,43 @@ function normalizeMangaPreview(
   }
 }
 
-// KaliScan's listing markup omits genres for some titles (commonly brand-new
-// uploads), which would let adult content slip past the browse blur. Worse, the
-// source frequently under-tags adult titles entirely (e.g. only "Seinen"), so we
-// also consult MyAnimeList — which carries the real genres — for these cards.
-// Bounded + cached so a page load stays cheap.
-const MAX_GENRE_BACKFILL = 12
+// Browse listings and search results often arrive with no genres — the listing
+// markup omits them for some (often brand-new) titles, and the search API never
+// returns them. Without genres an adult title slips past the blur, so we back-fill
+// from the (cached) detail page, and when the source has no genres at all (it
+// under-tags some adult titles, e.g. only "Seinen"), fall back to MyAnimeList,
+// which carries the real genres. Runs on already-normalized previews and is
+// bounded so a page load stays cheap.
+const MAX_GENRE_BACKFILL = 24
+
+async function resolveBackfillGenres(
+  preview: SourceMangaPreview
+): Promise<string[]> {
+  const { sourceId, sourceSlug } = decodeSourceMangaSlug(preview.id)
+  const adapter = getAdapter(sourceId)
+
+  const info = await adapter.getMangaInfoBySlug(sourceSlug).catch(() => null)
+  // Drop the source's label placeholder so it is not mistaken for a genre.
+  const sourceGenres = (info?.genres ?? []).filter(
+    (genre) => genre !== adapter.definition.label
+  )
+
+  // If the source already tags it adult, trust that — no need to hit MyAnimeList.
+  if (isAdultContent(undefined, sourceGenres)) {
+    return sourceGenres
+  }
+
+  // Otherwise consult MyAnimeList, which carries the real genres, and union them
+  // in — this catches titles the source under-tags (e.g. only "Seinen").
+  const mal = await getMyAnimeListMetadata(
+    preview.title,
+    preview.altTitles ?? []
+  ).catch(() => null)
+
+  return [...new Set([...sourceGenres, ...(mal?.genres ?? [])])]
+}
 
 async function backfillMissingGenres(
-  adapter: SourceAdapter,
   previews: SourceMangaPreview[]
 ): Promise<SourceMangaPreview[]> {
   const missing = previews.filter((preview) => preview.genres.length === 0)
@@ -122,19 +150,7 @@ async function backfillMissingGenres(
 
   await Promise.all(
     missing.slice(0, MAX_GENRE_BACKFILL).map(async (preview) => {
-      const [info, mal] = await Promise.all([
-        adapter.getMangaInfoBySlug(preview.id).catch(() => null),
-        getMyAnimeListMetadata(preview.title, preview.altTitles ?? []).catch(
-          () => null
-        ),
-      ])
-
-      // Drop the source's label placeholder so it is not mistaken for a genre,
-      // then union with MyAnimeList's genres (the more reliable adult signal).
-      const sourceGenres = (info?.genres ?? []).filter(
-        (genre) => genre !== adapter.definition.label
-      )
-      const genres = [...new Set([...sourceGenres, ...(mal?.genres ?? [])])]
+      const genres = await resolveBackfillGenres(preview)
 
       if (genres.length) {
         filled.set(preview.id, genres)
@@ -331,10 +347,9 @@ export async function browseSourceManga(
       const results = await Promise.all(
         catalogAdapters.map(async (adapter) => {
           const result = await adapter.browse({ ...filters, limit, page })
-          const items = await backfillMissingGenres(adapter, result.items)
 
           return {
-            items: items.map((item) =>
+            items: result.items.map((item) =>
               normalizeMangaPreview(item, adapter.definition.id)
             ),
             total: result.total,
@@ -342,12 +357,12 @@ export async function browseSourceManga(
         })
       )
 
-      if (catalogAdapters.length === 1) {
-        return results[0]
-      }
+      const items = await backfillMissingGenres(
+        results.flatMap((result) => result.items)
+      )
 
       return {
-        items: results.flatMap((result) => result.items),
+        items,
         total: results.reduce((sum, result) => sum + result.total, 0),
       }
     }
@@ -376,7 +391,9 @@ export async function browseSourceManga(
       filters.sort
     )
     const start = (page - 1) * limit
-    const items = allItems.slice(start, start + limit)
+    // Back-fill only the visible page so search results get genres (and so adult
+    // titles are gated) without enriching the whole aggregated list.
+    const items = await backfillMissingGenres(allItems.slice(start, start + limit))
 
     return {
       items,
@@ -386,12 +403,13 @@ export async function browseSourceManga(
 
   const adapter = getAdapter(sourceId)
   const result = await adapter.browse(filters)
+  const items = await backfillMissingGenres(
+    result.items.map((item) => normalizeMangaPreview(item, adapter.definition.id))
+  )
 
   return {
     ...result,
-    items: result.items.map((item) =>
-      normalizeMangaPreview(item, adapter.definition.id)
-    ),
+    items,
   }
 }
 

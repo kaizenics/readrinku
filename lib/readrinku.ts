@@ -48,9 +48,18 @@ export const ADULT_GENRE_HINTS = [
   "18+",
 ]
 
+// Non-18+ genres whose label contains an adult hint as a substring (e.g.
+// MyAnimeList's "Adult Cast" = grown-up characters, not explicit content).
+const NOT_ADULT_GENRES = new Set(["adult cast"])
+
 function hasAdultGenre(genres: readonly string[] | undefined) {
   return (genres ?? []).some((genre) => {
-    const value = genre.toLowerCase()
+    const value = genre.toLowerCase().trim()
+
+    if (NOT_ADULT_GENRES.has(value)) {
+      return false
+    }
+
     return ADULT_GENRE_HINTS.some((hint) => value.includes(hint))
   })
 }
