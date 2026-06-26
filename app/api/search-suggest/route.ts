@@ -1,5 +1,4 @@
 import { getSearchMatches, getSearchSuggestions } from "@/lib/data/source"
-import { getFamilySafe } from "@/lib/data/family-safe"
 import { hasAdultTitle, isAdultContent } from "@/lib/readrinku"
 
 // Lightweight typeahead endpoint for the header search dropdown. It returns a
@@ -12,21 +11,32 @@ import { hasAdultTitle, isAdultContent } from "@/lib/readrinku"
 // enriched one. Both skip the expensive per-result detail back-fill. The
 // upstream sources expose their own `/api/search`, so this route is named
 // distinctly to avoid confusion.
-export const dynamic = "force-dynamic"
-
+//
+// The response is fully determined by the URL (q + enrich + safe), so it is
+// edge-cacheable: popular/repeat searches are served instantly from the CDN
+// instead of re-running the live upstream lookups, and stale-while-revalidate
+// keeps it instant while a fresh copy is fetched in the background.
 const SUGGEST_LIMIT = 5
 const MIN_QUERY_LENGTH = 2
+const CACHE_HEADER = {
+  "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=3600",
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const q = (searchParams.get("q") ?? "").trim()
   const enrich = searchParams.get("enrich") === "1"
+  // Family Safe travels in the URL (not a cookie) so each variant caches
+  // separately and correctly. Defaults to on.
+  const familySafe = searchParams.get("safe") !== "0"
 
   if (q.length < MIN_QUERY_LENGTH) {
-    return Response.json({ q, items: [], total: 0, enriched: enrich })
+    return Response.json(
+      { q, items: [], total: 0, enriched: enrich },
+      { headers: CACHE_HEADER }
+    )
   }
 
-  const familySafe = await getFamilySafe()
   // Fetch a few extra when filtering, so a handful of adult hits don't leave the
   // dropdown short of suggestions.
   const fetchLimit = familySafe ? SUGGEST_LIMIT + 4 : SUGGEST_LIMIT
@@ -54,5 +64,8 @@ export async function GET(request: Request) {
     .filter((manga) => !familySafe || !manga.isAdult)
     .slice(0, SUGGEST_LIMIT)
 
-  return Response.json({ q, items, total: result.total, enriched: enrich })
+  return Response.json(
+    { q, items, total: result.total, enriched: enrich },
+    { headers: CACHE_HEADER }
+  )
 }

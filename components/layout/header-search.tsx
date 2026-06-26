@@ -45,6 +45,16 @@ type SuggestResponse = {
 const MIN_QUERY_LENGTH = 2
 const DEBOUNCE_MS = 300
 
+// Reads the Family Safe cookie (default on) to pass as a URL param, keeping the
+// suggest endpoint cookie-free and edge-cacheable. Mirrors family-safe-toggle.
+function familySafeParam() {
+  try {
+    return document.cookie.split("; ").includes("family-safe=off") ? "0" : "1"
+  } catch {
+    return "1"
+  }
+}
+
 export function HeaderSearch() {
   const router = useRouter()
   const pathname = usePathname()
@@ -82,9 +92,11 @@ export function HeaderSearch() {
     }
 
     const controller = new AbortController()
-    const query = encodeURIComponent(trimmed)
+    // Pass Family Safe in the URL (not a cookie) so the endpoint stays
+    // edge-cacheable per variant.
+    const query = `q=${encodeURIComponent(trimmed)}&safe=${familySafeParam()}`
     const timer = setTimeout(() => {
-      fetch(`/api/search-suggest?q=${query}`, { signal: controller.signal })
+      fetch(`/api/search-suggest?${query}`, { signal: controller.signal })
         .then((res) =>
           res.ok ? res.json() : Promise.reject(new Error("Search failed"))
         )
@@ -96,7 +108,7 @@ export function HeaderSearch() {
           // Phase 2: enrich the same rows. The source search is now cached, so
           // this mostly waits on MyAnimeList. A failure here is non-fatal — the
           // fast matches stay on screen.
-          return fetch(`/api/search-suggest?q=${query}&enrich=1`, {
+          return fetch(`/api/search-suggest?${query}&enrich=1`, {
             signal: controller.signal,
           })
         })
