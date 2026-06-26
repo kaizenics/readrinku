@@ -65,12 +65,15 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* Preload the hero background (a CSS image, otherwise discovered late) so
+          it lands as the LCP element faster. */}
+      <link rel="preload" as="image" href="/manhwa.webp" fetchPriority="high" />
       <JsonLd data={homepageSchema} />
       <section className="bg-[#05070b]">
         <header
           className="relative h-[60vh] overflow-hidden"
           style={{
-            backgroundImage: "url('/manhwa.png')",
+            backgroundImage: "url('/manhwa.webp')",
             backgroundPosition: "center 20%",
             backgroundRepeat: "no-repeat",
             backgroundSize: "cover",
