@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import Script from "next/script"
 
 import { AppProvider } from "@/components/providers/app-provider"
 import { ThemedFavicon } from "@/components/layout/themed-favicon"
@@ -93,6 +94,12 @@ export default function RootLayout({
       <body className="min-h-full bg-background font-sans text-foreground">
         <ThemedFavicon />
         <AppProvider>{children}</AppProvider>
+        <Script
+          defer
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon='{"token": "656aec4171e5487cac0c9a907bc9f905"}'
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   )
