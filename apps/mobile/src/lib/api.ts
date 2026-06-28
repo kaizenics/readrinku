@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ContentRating, MangaStatus } from '@rinku/core';
 
-// Base URL of the readrinku web app, which hosts the manga API (the server-only
-// data layer over HTTP). Override per-environment with EXPO_PUBLIC_API_URL, e.g.
-// your machine's LAN IP for a physical device, or the deployed URL.
+// Base URL of the standalone @rinku/api server (Hono, hosted off Vercel).
+// Defaults to the local dev port; override with EXPO_PUBLIC_API_URL for a
+// physical device (your machine's LAN IP) or the deployed API URL.
 export const API_BASE_URL = (
-  process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000'
+  process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3001'
 ).replace(/\/$/, '');
 
 // Mirrors the slim payload returned by apps/web/app/api/home/route.ts.
