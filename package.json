@@ -5,6 +5,9 @@
   "packageManager": "pnpm@10.30.0",
   "scripts": {
     "dev": "pnpm --filter @rinku/web dev",
+    "dev:web": "pnpm --filter @rinku/web dev",
+    "dev:mobile": "pnpm --filter @rinku/mobile dev",
+    "dev:all": "pnpm -r --parallel run dev",
     "build": "pnpm --filter @rinku/web build",
     "start": "pnpm --filter @rinku/web start",
     "lint": "pnpm -r lint",
