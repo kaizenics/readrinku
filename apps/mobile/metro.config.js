@@ -1,5 +1,7 @@
-// Monorepo-aware Metro config. See https://docs.expo.dev/guides/monorepos/
+// Monorepo-aware Metro + Uniwind (Tailwind v4 bindings for RN).
+// https://docs.uniwind.dev/api/metro-config
 const { getDefaultConfig } = require('expo/metro-config');
+const { withUniwindConfig } = require('uniwind/metro');
 const path = require('path');
 
 const projectRoot = __dirname;
@@ -11,11 +13,12 @@ const config = getDefaultConfig(projectRoot);
 //    raw TypeScript source is transpiled by Metro.
 config.watchFolders = [workspaceRoot];
 
-// 2. Resolve modules from the app first, then fall back to the workspace root
-//    (where pnpm's hoisted node_modules and the @rinku/* symlinks live).
+// 2. Resolve modules from the app first, then the hoisted workspace root.
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),
   path.resolve(workspaceRoot, 'node_modules'),
 ];
 
-module.exports = config;
+module.exports = withUniwindConfig(config, {
+  cssEntryFile: './src/global.css',
+});

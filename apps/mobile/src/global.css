@@ -1,9 +1,8 @@
-:root {
-  --font-display:
-    Spline Sans, Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji,
-    Segoe UI Symbol, Noto Color Emoji;
-  --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
-  --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
-  --font-serif: Georgia, 'Times New Roman', serif;
-}
+@import 'tailwindcss';
+@import 'uniwind';
+@import 'heroui-native/styles';
+
+/* heroui-native ships compiled components that use Tailwind classes; Uniwind must
+   scan them to emit the matching styles. With pnpm node-linker=hoisted the package
+   lives in the workspace-root node_modules, so the path climbs out of apps/mobile/src. */
+@source '../../../node_modules/heroui-native/lib';
