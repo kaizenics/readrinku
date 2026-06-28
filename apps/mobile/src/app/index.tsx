@@ -1,108 +1,64 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { Spinner } from 'heroui-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { mangaGenres } from '@rinku/core';
-
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+import { MangaShelf } from '@/components/manga-shelf';
+import { useHome } from '@/lib/api';
 
 export default function HomeScreen() {
+  const { data, isLoading, isError, refetch } = useHome();
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <View className="flex-1 bg-neutral-950">
+      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
+        <View className="px-4 pb-3 pt-2">
+          <Text className="text-2xl font-bold text-white">ReadRinku</Text>
+          <Text className="text-sm text-neutral-400">
+            Browse live titles from multiple sources
+          </Text>
+        </View>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Shared core"
-            hint={
-              <ThemedText type="code">
-                {mangaGenres.length} genres from @rinku/core
-              </ThemedText>
-            }
-          />
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
+        {isLoading ? (
+          <View className="flex-1 items-center justify-center">
+            <Spinner />
+            <Text className="mt-3 text-sm text-neutral-400">Loading manga…</Text>
+          </View>
+        ) : isError ? (
+          <View className="flex-1 items-center justify-center px-8">
+            <Text className="text-center text-base text-white">
+              Couldn’t reach the manga API.
+            </Text>
+            <Text className="mt-1 text-center text-sm text-neutral-400">
+              Make sure the web app is running and EXPO_PUBLIC_API_URL points to it.
+            </Text>
+            <Pressable
+              onPress={() => refetch()}
+              className="mt-4 rounded-lg bg-white px-5 py-2.5"
+            >
+              <Text className="font-medium text-neutral-950">Retry</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <ScrollView
+            className="flex-1"
+            contentContainerStyle={{ paddingTop: 8, paddingBottom: 32 }}
+            showsVerticalScrollIndicator={false}
+          >
+            <MangaShelf title="Featured" manga={data?.featured ?? []} cardWidth={150} />
+            <MangaShelf
+              title="Latest comic updates"
+              description="Fresh titles and chapter updates."
+              manga={data?.latest ?? []}
+            />
+            <MangaShelf
+              title="Source spotlight"
+              description="More live picks for current releases."
+              manga={data?.spotlight ?? []}
+            />
+            <MangaShelf title="More comics to explore" manga={data?.archive ?? []} />
+          </ScrollView>
+        )}
       </SafeAreaView>
-    </ThemedView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
-});
