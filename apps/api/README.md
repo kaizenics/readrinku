@@ -29,3 +29,22 @@ It runs with `tsx` (no build step) and serves on `$PORT`.
   one that spins down between requests for warm performance.
 
 Point the mobile app at the deployed URL via `EXPO_PUBLIC_API_URL`.
+
+## Deploy with Coolify (self-hosted VPS) — recommended if you have one
+
+Cheapest predictable option: always-on (the in-memory cache stays warm) and no
+metered CPU/bandwidth billing. A `Dockerfile` is included.
+
+1. Coolify → New Resource → your server → **Git repository** (this repo).
+2. Build Pack: **Dockerfile**. Dockerfile Location: `apps/api/Dockerfile`.
+   Base Directory: `/` — the build context MUST be the repo root (monorepo).
+3. Port: **3001** (the app listens on `$PORT`, default 3001).
+4. Health check path: `/health`.
+5. Coolify provisions a domain + Let's Encrypt SSL — use that HTTPS URL as the
+   mobile app's `EXPO_PUBLIC_API_URL`.
+
+Bandwidth stays low: only JSON passes through the API — images load on the device
+directly from the source CDNs, not through your VPS. Don't add an image proxy
+unless a source blocks hotlinking (that would route image bytes through the VPS).
+Give the box ≥ 2 GB RAM for Coolify + the Node app.
+
