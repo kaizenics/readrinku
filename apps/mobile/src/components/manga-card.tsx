@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
 import type { MangaCard as MangaCardData } from '@/lib/api';
+import { imageSource } from '@/lib/images';
 
 interface MangaCardProps {
   manga: MangaCardData;
@@ -23,7 +24,7 @@ export function MangaCard({ manga, width = 128 }: MangaCardProps) {
         style={{ width, height }}>
         {manga.image ? (
           <Image
-            source={{ uri: manga.image }}
+            source={imageSource(manga.image)}
             style={{ width: '100%', height: '100%' }}
             contentFit="cover"
             transition={200}

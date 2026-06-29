@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { FlatList, Pressable, Text, View } from 'react-native';
 
+import { imageSource } from '@/lib/images';
 import { useAppStore } from '@/providers/app-store';
 
 export default function HistoryScreen() {
@@ -36,7 +37,7 @@ export default function HistoryScreen() {
             className="flex-row gap-3">
             {item.manga.image ? (
               <Image
-                source={{ uri: item.manga.image }}
+                source={imageSource(item.manga.image)}
                 style={{ width: 48, height: 72, borderRadius: 6 }}
                 contentFit="cover"
               />

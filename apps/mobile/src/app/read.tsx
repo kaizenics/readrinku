@@ -4,6 +4,7 @@ import { Spinner } from 'heroui-native';
 import { FlatList, Pressable, Text, useWindowDimensions, View } from 'react-native';
 
 import { useChapterPages } from '@/lib/api';
+import { imageSource } from '@/lib/images';
 
 export default function ReaderScreen() {
   const { url, sourceId } = useLocalSearchParams<{
@@ -46,7 +47,7 @@ export default function ReaderScreen() {
           const ratio = item.width > 0 ? item.height / item.width : 1.4;
           return (
             <Image
-              source={{ uri: item.src }}
+              source={imageSource(item.src)}
               style={{ width, height: Math.round(width * ratio) }}
               contentFit="contain"
             />

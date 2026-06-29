@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 
 import { useMangaDetail, type MangaCard, type MangaDetailChapter } from '@/lib/api';
+import { imageSource } from '@/lib/images';
 import { useAppStore } from '@/providers/app-store';
 
 export default function MangaDetailScreen() {
@@ -64,7 +65,7 @@ export default function MangaDetailScreen() {
       <View className="relative">
         {manga.coverImage ? (
           <Image
-            source={{ uri: manga.coverImage }}
+            source={imageSource(manga.coverImage)}
             style={{ width: '100%', height: 300 }}
             contentFit="cover"
           />
@@ -78,7 +79,7 @@ export default function MangaDetailScreen() {
         <View className="flex-row gap-4">
           {manga.coverImage ? (
             <Image
-              source={{ uri: manga.coverImage }}
+              source={imageSource(manga.coverImage)}
               style={{ width: 110, height: 165, borderRadius: 12 }}
               contentFit="cover"
             />
