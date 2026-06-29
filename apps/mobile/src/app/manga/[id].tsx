@@ -4,11 +4,13 @@ import { Spinner } from 'heroui-native';
 import { useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 
-import { useMangaDetail, type MangaDetailChapter } from '@/lib/api';
+import { useMangaDetail, type MangaCard, type MangaDetailChapter } from '@/lib/api';
+import { useAppStore } from '@/providers/app-store';
 
 export default function MangaDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, isLoading, isError, refetch } = useMangaDetail(id);
+  const { libraryStatus, toggleLibrary, recordHistory } = useAppStore();
   const [expanded, setExpanded] = useState(false);
 
   if (isLoading) {
@@ -32,7 +34,25 @@ export default function MangaDetailScreen() {
 
   const { manga, provider, chapters } = data;
 
+  const snapshot: MangaCard = {
+    id: manga.id,
+    title: manga.title,
+    image: manga.coverImage,
+    chapterCount: manga.chapterCount,
+    lastChapterLabel: '',
+    genres: manga.genres,
+    contentRating: manga.contentRating,
+    status: manga.status,
+    synopsis: manga.synopsis,
+  };
+  const saved = Boolean(libraryStatus(manga.id));
+
   const openChapter = (chapter: MangaDetailChapter) => {
+    recordHistory(snapshot, {
+      title: chapter.title,
+      url: chapter.sourceUrl,
+      sourceId: provider,
+    });
     router.push({
       pathname: '/read',
       params: { url: chapter.sourceUrl, sourceId: provider, title: chapter.title },
@@ -77,6 +97,18 @@ export default function MangaDetailScreen() {
             </Text>
           </View>
         </View>
+
+        <Pressable
+          onPress={() => toggleLibrary(snapshot, 'reading')}
+          className={
+            saved
+              ? 'mt-4 flex-row items-center justify-center rounded-xl bg-neutral-800 py-3'
+              : 'mt-4 flex-row items-center justify-center rounded-xl bg-white py-3'
+          }>
+          <Text className={saved ? 'font-semibold text-white' : 'font-semibold text-neutral-950'}>
+            {saved ? '✓ In Library' : '+ Add to Library'}
+          </Text>
+        </Pressable>
 
         {manga.genres.length ? (
           <View className="mt-4 flex-row flex-wrap gap-2">
