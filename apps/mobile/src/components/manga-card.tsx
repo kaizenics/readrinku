@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
 import type { MangaCard as MangaCardData } from '@/lib/api';
@@ -8,17 +9,18 @@ interface MangaCardProps {
   width?: number;
 }
 
-// A single cover-forward manga card. expo-image is styled via `style` (Uniwind's
-// className interop only covers react-native core components, not expo-image).
+// A single cover-forward manga card. Tapping opens the detail screen. expo-image
+// is styled via `style` (Uniwind's className interop only covers RN core).
 export function MangaCard({ manga, width = 128 }: MangaCardProps) {
   const height = Math.round(width * 1.5);
 
   return (
-    <Pressable className="mr-3" style={{ width }}>
+    <Pressable
+      style={{ width }}
+      onPress={() => router.push({ pathname: '/manga/[id]', params: { id: manga.id } })}>
       <View
         className="overflow-hidden rounded-xl bg-neutral-800"
-        style={{ width, height }}
-      >
+        style={{ width, height }}>
         {manga.image ? (
           <Image
             source={{ uri: manga.image }}

@@ -4,7 +4,9 @@
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~56.0.18",
+    "@expo/vector-icons": "^15.1.1",
     "@gorhom/bottom-sheet": "^5.2.14",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "@rinku/core": "workspace:*",
     "@tanstack/react-query": "^5.101.2",
     "expo": "~56.0.12",

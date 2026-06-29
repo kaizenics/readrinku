@@ -30,6 +30,7 @@ export function MangaShelf({ title, description, manga, cardWidth }: MangaShelfP
         keyExtractor={(item) => item.id}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 16 }}
+        ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
         renderItem={({ item }) => <MangaCard manga={item} width={cardWidth} />}
       />
     </View>
